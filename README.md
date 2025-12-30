@@ -1,4 +1,4 @@
-# ChatVat 🏭
+# ChatVat (The ChatBot🤖 Factory🏭)
 > **The Universal RAG Chatbot Factory**
 
 [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](#license)
@@ -190,5 +190,5 @@ This software is **Proprietary (Closed Source)**.
 ---
 
 <p align="center">
-  Built with ❤️ by the <b>ChatVat Factory</b>.
+  Built with ❤️ by the <b>Madhav Kapila</b>.
 </p>
