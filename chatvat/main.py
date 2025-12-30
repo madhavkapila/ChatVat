@@ -240,7 +240,8 @@ def init():
     try:
         config = ProjectConfig(
             bot_name=bot_name, sources=sources, system_prompt=system_prompt,
-            refresh_interval_minutes=refresh_minutes, port=port
+            refresh_interval_minutes=refresh_minutes, port=port,
+            llm_model=llm_model, embedding_model=embed_model
         )
         with open("chatvat.config.json", "w") as f:
             f.write(config.model_dump_json(indent=4))
