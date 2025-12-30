@@ -16,6 +16,7 @@ from rich.prompt import Prompt, Confirm, IntPrompt
 from rich.table import Table
 
 from chatvat.config_schema import ProjectConfig, DataSource
+from chatvat.constants import DEFAULT_EMBEDDING_MODEL, DEFAULT_LLM_MODEL
 from chatvat.utils.logger import log_info, log_error, log_success, log_warning
 from chatvat.builder import build_bot
 
@@ -229,8 +230,13 @@ def init():
     # 4. Settings
     refresh_minutes = IntPrompt.ask("🔄 Auto-Update Interval (Minutes) [0=Disabled]", default=0)
     port = IntPrompt.ask("🌐 Deployment Port", default=8000)
+
+    # 5. AI Configuration
+    console.print("\n[bold]🧠 AI Model Configuration[/bold]")
+    llm_model = Prompt.ask("Select Groq Model", default=DEFAULT_LLM_MODEL)
+    embed_model = Prompt.ask("Select Embedding Model (HuggingFace)", default=DEFAULT_EMBEDDING_MODEL)
     
-    # 5. Save
+    # 6. Save
     try:
         config = ProjectConfig(
             bot_name=bot_name, sources=sources, system_prompt=system_prompt,

@@ -148,3 +148,9 @@ logs/
 
 # Mac OS junk
 .DS_Store
+
+
+debug_crawler.py
+
+poetry.lock
+poetry.lock.bak

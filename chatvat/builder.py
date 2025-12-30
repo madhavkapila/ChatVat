@@ -77,12 +77,33 @@ def inject_config(dist_dir: str):
     try:
         shutil.copy(config_src, os.path.join(dist_dir, "chatvat.config.json"))
         
-        # [NEW] Also inject secrets if they exist
-        if os.path.exists(".env"):
-            shutil.copy(".env", os.path.join(dist_dir, ".env"))
+        # # Also inject secrets if they exist
+        # if os.path.exists(".env"):
+        #     shutil.copy(".env", os.path.join(dist_dir, ".env"))
             
     except Exception as e:
         log_error(f"Failed to inject config: {e}", fatal=True)
+
+def inject_local_files(dist_dir: str, config_path: str):
+    """
+    Scans the config for 'local_file' sources and copies them into the build context.
+    """
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        
+        sources = config.get("sources", [])
+        for source in sources:
+            if source.get("type") == "local_file":
+                target = source.get("target")
+                if os.path.exists(target):
+                    # Create a 'data' folder in dist to hold these files
+                    dest_path = os.path.join(dist_dir, target)
+                    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+                    shutil.copy(target, dest_path)
+                    log_info(f"📂 Injected local file: {target}")
+    except Exception as e:
+        log_warning(f"Could not inject local files: {e}")
 
 def run_docker_build(bot_name: str, dist_path: str) -> bool:
     """
@@ -164,16 +185,20 @@ def build_bot():
     log_info("📂 Preparing assembly line...")
     clean_dist_folder(dist_dir)
     
-    # [NEW] Step 1: Inject the Brain (The Python Package)
+    # Inject the Brain (The Python Package)
     copy_source_code(dist_dir)
     
-    # Step 2: Inject the Body (The Dockerfile & Entrypoint)
+    # Inject the Body (The Dockerfile & Entrypoint)
     copy_template_files(template_dir, dist_dir)
     
-    # Step 3: Inject the Soul (Configuration)
+    # Inject the Soul (Configuration)
     inject_config(dist_dir)
 
-    # 3. Get Bot Name
+    # Inject Local Files if any
+    config_path = os.path.join(user_project_dir, "chatvat.config.json")
+    inject_local_files(dist_dir, config_path)
+
+    # Get Bot Name
     try:
         # [UPDATED] Filename correction
         config_path = os.path.join(user_project_dir, "chatvat.config.json")
@@ -185,7 +210,7 @@ def build_bot():
         bot_name = "chatvat-bot"
         port = 8000
 
-    # 4. Attempt Docker Build
+    # Attempt Docker Build
     tag = bot_name.lower().replace(" ", "-")
     docker_success = run_docker_build(bot_name, dist_dir)
 
@@ -204,7 +229,7 @@ def build_bot():
         print("\n" + "="*60)
         print(f"🚀 RUN COMMAND:")
         # [UPDATED] Added --env-file so it picks up the .env from CWD
-        print(f"docker run -d -p {port}:8000 --env-file .env {tag}")
+        print(f"docker run -d -p {port}:8000 --name {tag}_chatvat --env-file .env {tag}")
         print("="*60 + "\n")
     else:
         # Fallback: Leave dist/ for the user to handle manually

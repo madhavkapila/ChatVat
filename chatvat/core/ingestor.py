@@ -2,14 +2,18 @@
 
 import asyncio
 import logging
+import os
+import json
 from typing import List, Dict, Any
 
 from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from chatvat.connectors.crawler import RuntimeCrawler
 from chatvat.connectors.loader import RuntimeJsonLoader
 from chatvat.core.vector import get_vector_db
 from chatvat.config_loader import load_runtime_config 
+from langchain_community.document_loaders import PyPDFLoader, TextLoader
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +29,23 @@ class IngestionEngine:
         self.loader = RuntimeJsonLoader()
         self.db = get_vector_db()
 
+        self.splitter = RecursiveCharacterTextSplitter(
+            chunk_size=500,
+            chunk_overlap=100,
+            add_start_index=True
+        )
+
     async def _process_static_url(self, target: str) -> List[Document]:
         """Strategy for Static/JS Websites"""
         markdown = await self.crawler.fetch_page(target)
         if markdown:
-            # Metadata is crucial for the chatbot to cite its sources later
-            return [Document(page_content=markdown, metadata={"source": target, "type": "url"})]
+            # Create the raw giant document
+            raw_doc = Document(page_content=markdown, metadata={"source": target, "type": "url"})
+            # Split into chunks for better embedding
+            chunks = self.splitter.split_documents([raw_doc])
+            logger.info(f"🔪 Split {target} into {len(chunks)} chunks.")
+            return chunks
+            
         return []
 
     async def _process_dynamic_json(self, target: str, headers: Dict[str, Any] = None) -> List[Document]: #type: ignore
@@ -47,6 +62,31 @@ class IngestionEngine:
             )
             documents.append(doc)
         return documents
+    
+    async def _process_local_file(self, target: str) -> List[Document]:
+        """Strategy for Local Files"""
+        if not os.path.exists(target):
+            return []
+        
+        try:
+            raw_docs = []
+            if target.endswith(".pdf"):
+                loader = PyPDFLoader(target)
+                raw_docs = loader.load()
+            else:
+                loader = TextLoader(target, encoding="utf-8")
+                raw_docs = loader.load()
+            
+            # --- Split Local Files too ---
+            if raw_docs:
+                chunks = self.splitter.split_documents(raw_docs)
+                logger.info(f"🔪 Split file {target} into {len(chunks)} chunks.")
+                return chunks
+                
+        except Exception as e:
+            logger.error(f"Failed to load {target}: {e}")
+            
+        return []
 
     async def run_pipeline(self):
         """
@@ -78,6 +118,9 @@ class IngestionEngine:
                         # We use getattr in case the field is missing in older configs
                         headers = getattr(source, 'headers', {})
                         new_docs = await self._process_dynamic_json(source.target, headers)
+
+                    elif source.type == 'local_file':
+                        new_docs = await self._process_local_file(source.target)
                     
                     if new_docs:
                         all_docs.extend(new_docs)

@@ -51,3 +51,8 @@ class ProjectConfig(BaseModel):
 
     # Deployment Port (Default 8000, but user can change it)
     port: int = Field(default=8000, ge=1024, le=65535)
+
+    # Model Choices
+    llm_model: str = Field(default="llama-3.3-70b-versatile")
+    # Choice for embedding model which would be used to generate embeddings
+    embedding_model: str = Field(default="all-MiniLM-L6-v2")

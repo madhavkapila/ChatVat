@@ -6,9 +6,11 @@ from typing import List, Optional
 
 import chromadb
 from chromadb.config import Settings
+from chatvat.config_loader import load_runtime_config
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
+import hashlib
 
 
 from chatvat.constants import (
@@ -46,8 +48,11 @@ class VectorManager:
         logger.info(f"🔌 Connecting to Vector DB at {DB_PATH}...")
         
         try:
+            config = load_runtime_config()
+            embed_name = config.embedding_model if config else DEFAULT_EMBEDDING_MODEL
+            
             # Setup Embedding Function (HuggingFace)
-            self.embedding_fn = HuggingFaceEmbeddings(model_name=DEFAULT_EMBEDDING_MODEL)
+            self.embedding_fn = HuggingFaceEmbeddings(model_name=embed_name)
             
             # Setup Persistent Client
             self.client = chromadb.PersistentClient(
@@ -85,32 +90,30 @@ class VectorManager:
 
         with self.write_lock:
             try:
-                count_initial = len(documents)
+                # count_initial = len(documents)
                 
                 unique_map = {}
                 for doc in documents:
-                    # Generate ID based on content hash
-                    doc_id = str(hash(doc.page_content))
-                    
-                    # Only keep the first occurrence of this ID
-                    if doc_id not in unique_map:
-                        unique_map[doc_id] = doc
+                    # Generate a STABLE ID based on content
+                    doc_id = hashlib.md5(doc.page_content.encode()).hexdigest()
+                    unique_map[doc_id] = doc
                 
                 # Extract clean lists
                 ids = list(unique_map.keys())
                 clean_docs = list(unique_map.values())
-                count_final = len(clean_docs)
+                # count_final = len(clean_docs)
                 
-                if count_initial != count_final:
-                    logger.warning(f"⚠️ Dropped {count_initial - count_final} duplicate documents.")
+                # Extract texts and metadatas for the raw Chroma upsert
+                texts = [d.page_content for d in clean_docs]
+                metadatas = [d.metadata for d in clean_docs]
 
-                if clean_docs:
-                    logger.info(f"🔒 Lock Acquired. Upserting {count_final} unique documents...")
-                    self.vector_store.add_documents(documents=clean_docs, ids=ids)
-                    logger.info(f"🔓 Upsert Complete. Lock Released.")
-                else:
-                    logger.warning("⚠️ No unique documents to upload.")
-                    
+                logger.info(f"🔒 Upserting {len(ids)} documents to Chroma...")
+                self.collection.upsert(
+                    ids=ids,
+                    documents=texts,
+                    metadatas=metadatas
+                )
+                logger.info("🔓 Upsert Complete.")
             except Exception as e:
                 logger.error(f"Error during upsert: {e}")
 

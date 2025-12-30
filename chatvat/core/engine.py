@@ -4,7 +4,7 @@ import os
 import logging
 from typing import Optional, List
 
-from sympy import re
+import re
 
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
@@ -14,6 +14,7 @@ from langchain_core.runnables import RunnablePassthrough
 from chatvat.core.vector import get_vector_db
 from chatvat.config_loader import load_runtime_config
 from chatvat.constants import DEFAULT_LLM_MODEL
+from chatvat.config_loader import load_runtime_config
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +39,13 @@ class RagEngine:
         if not api_key:
             logger.critical("❌ GROQ_API_KEY is missing from environment variables!")
             raise ValueError("GROQ_API_KEY missing")
+        
+        config = load_runtime_config()
+        model_name = config.llm_model if config else DEFAULT_LLM_MODEL
 
         self.llm = ChatGroq(
             temperature=0.3, # Low temp for factual answers
-            model=DEFAULT_LLM_MODEL,
+            model=model_name,
             api_key=api_key
         )
 
@@ -73,7 +77,7 @@ class RagEngine:
         # Limit to 1000 chars to prevent massive context flooding
         clean_query = query[:1000]
         # Remove null bytes or control characters
-        clean_query = re.sub(r'[\x00-\x1f\x7f]', '', clean_query) # type: ignore
+        clean_query = re.sub(r'[\x00-\x1f\x7f]', '', clean_query)
         return clean_query.strip()
 
     def get_response(self, user_query: str) -> str:

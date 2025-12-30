@@ -45,3 +45,6 @@ langchain-community
 aiohttp>=3.9.0
 # For structural validation (Pydantic V2).
 pydantic>=2.5.0
+
+# For RAG source aas file reading
+pypdf>=4.0.0

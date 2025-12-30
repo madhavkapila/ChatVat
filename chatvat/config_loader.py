@@ -4,8 +4,10 @@ import json
 import os
 import logging
 from typing import List, Optional, Literal, Dict
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import re
+
+from chatvat.constants import DEFAULT_LLM_MODEL, DEFAULT_EMBEDDING_MODEL
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +27,12 @@ class DataSource(BaseModel):
 
 class RuntimeConfig(BaseModel):
     bot_name: str
-    sources: List[DataSource]
+    sources: List[DataSource] = Field(default_factory=list)
     system_prompt: Optional[str] = None
     refresh_interval_minutes: int = 0  # Default 0 means "Never"
+    port: int = 8000
+    llm_model: str = DEFAULT_LLM_MODEL
+    embedding_model: str = DEFAULT_EMBEDDING_MODEL
 
 # --- Loader Logic ---
 

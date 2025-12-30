@@ -28,3 +28,5 @@ pip-delete-this-directory.txt
 # 4. Local Data (Don't overwrite production DB with local testing DB)
 data/
 chroma_db/
+
+.env

@@ -4,6 +4,11 @@ version = "0.1.0"
 description = "A universal RAG chatbot builder CLI."
 authors = ["Madhav Kapila <smartatk04@gmail.com>"]
 readme = "README.md"
+license = "Proprietary"
+classifiers = [
+    "License :: Other/Proprietary License",
+    "Private :: Do Not Upload"
+]
 
 # CRITICAL: This ensures 'bot_template' is packed inside the wheel.
 # Since we are using Poetry, we use this 'include' list, NOT setuptools.
@@ -13,7 +18,7 @@ include = ["chatvat/bot_template/**/*"]
 python = "^3.11"
 
 # --- CLI Dependencies (For 'chatvat init') ---
-typer = {extras = ["all"], version = "^0.9.0"}
+typer = {extras = ["all"], version = "^0.12.3"}
 rich = "^13.7.0"
 pyfiglet = "^1.0.2"
 pydantic = "^2.0.0"

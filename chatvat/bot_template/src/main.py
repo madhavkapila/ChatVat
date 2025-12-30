@@ -31,38 +31,54 @@ async def background_ingestion_loop():
     """
     Runs ingestion based on the user's 'refresh_interval' setting.
     """
-    logger.info("⏳ Background Ingestion Worker Started.")
-    
-    # 1. Initial Run (Wait 5s for startup)
-    await asyncio.sleep(5) 
-    try:
-        logger.info("🏁 Triggering Initial Ingestion...")
-        await run_ingestion()
-    except Exception as e:
-        logger.error(f"Initial ingestion failed: {e}")
 
-    # 2. Dynamic Loop Logic
-    # We load the config to see what the user wants
-    config = load_runtime_config()
+    lock_file = "/tmp/ingestion.lock"
     
-    # Default to 0 (No auto-update) if missing
-    interval_minutes = getattr(config, 'refresh_interval_minutes', 0)
-    
-    if interval_minutes > 0:
-        logger.info(f"🔄 Auto-Update enabled. Schedule: Every {interval_minutes} minutes.")
+    # Simple file-based lock to prevent multi-worker collisions
+    if os.path.exists(lock_file):
+        logger.info("⚠️ Ingestion already handled by another worker. Standing down.")
+        return
         
-        while True:
-            # Convert minutes to seconds
-            sleep_seconds = interval_minutes * 60
-            await asyncio.sleep(sleep_seconds)
-            
-            logger.info("⏰ Timer hit. Running scheduled ingestion...")
-            try:
-                await run_ingestion()
-            except Exception as e:
-                logger.error(f"Scheduled ingestion failed: {e}")
-    else:
-        logger.info("🛑 Auto-Update disabled (interval set to 0).")
+    try:
+        with open(lock_file, "w") as f:
+            f.write("locked")
+
+        logger.info("⏳ Background Ingestion Worker Started.")
+    
+        # 1. Initial Run (Wait 5s for startup)
+        await asyncio.sleep(5) 
+        try:
+            logger.info("🏁 Triggering Initial Ingestion...")
+            await run_ingestion()
+        except Exception as e:
+            logger.error(f"Initial ingestion failed: {e}")
+
+        # 2. Dynamic Loop Logic
+        # We load the config to see what the user wants
+        config = load_runtime_config()
+    
+        # Default to 0 (No auto-update) if missing
+        interval_minutes = getattr(config, 'refresh_interval_minutes', 0)
+    
+        if interval_minutes > 0:
+            logger.info(f"🔄 Auto-Update enabled. Schedule: Every {interval_minutes} minutes.")
+        
+            while True:
+                # Convert minutes to seconds
+                sleep_seconds = interval_minutes * 60
+                await asyncio.sleep(sleep_seconds)
+
+                logger.info("⏰ Timer hit. Running scheduled ingestion...")
+                try:
+                    await run_ingestion()
+                except Exception as e:
+                    logger.error(f"Scheduled ingestion failed: {e}")
+        else:
+            logger.info("🛑 Auto-Update disabled (interval set to 0).")
+
+    finally:
+        if os.path.exists(lock_file):
+            os.remove(lock_file)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -134,4 +150,6 @@ async def chat_endpoint(request: ChatRequest):
 # This allows running 'python src/main.py' for local testing
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    import os
+    port = int(os.getenv("PORT", 8000)) 
+    uvicorn.run(app, host="0.0.0.0", port=port)
