@@ -67,7 +67,7 @@ def resolve_env_var(value: str) -> str:
 
 # --- CONNECTION TESTER ---
 
-def test_connection(url: str, headers: Dict = None) -> bool:
+def test_connection(url: str, headers: Dict = None) -> bool: ##type: ignore
     """Pings URL with resolved secrets to verify accessibility."""
     real_headers = {}
     if headers:
@@ -153,7 +153,7 @@ def ask_for_sources() -> List[DataSource]:
                 log_success("File verified.")
 
         if should_add:
-            source_obj = DataSource(type=source_type, target=target, headers=headers)
+            source_obj = DataSource(type=source_type, target=target, headers=headers)# type: ignore
             sources.append(source_obj)
             log_success(f"Added source: {target}")
         else:
@@ -227,14 +227,14 @@ def init():
     sources = ask_for_sources()
     
     # 4. Settings
-    refresh_hours = IntPrompt.ask("🔄 Auto-Update Interval (Hours) [0=Disabled]", default=0)
+    refresh_minutes = IntPrompt.ask("🔄 Auto-Update Interval (Minutes) [0=Disabled]", default=0)
     port = IntPrompt.ask("🌐 Deployment Port", default=8000)
     
     # 5. Save
     try:
         config = ProjectConfig(
             bot_name=bot_name, sources=sources, system_prompt=system_prompt,
-            refresh_interval_hours=refresh_hours, port=port
+            refresh_interval_minutes=refresh_minutes, port=port
         )
         with open("chatvat.config.json", "w") as f:
             f.write(config.model_dump_json(indent=4))

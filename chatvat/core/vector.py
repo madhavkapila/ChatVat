@@ -11,10 +11,10 @@ from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
 
-from chatvat.bot_template.src.constants import (
-    DB_PATH, 
-    COLLECTION_NAME, 
-    EMBEDDING_MODEL_NAME
+from chatvat.constants import (
+    DB_PATH,                                         # type: ignore
+    COLLECTION_NAME,                                 # type: ignore
+    EMBEDDING_MODEL_NAME                             # type: ignore
 )
 
 logger = logging.getLogger(__name__)

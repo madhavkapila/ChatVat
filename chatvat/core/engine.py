@@ -11,9 +11,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 
-from chatvat.bot_template.src.core.vector import get_vector_db
-from chatvat.bot_template.src.config_loader import load_runtime_config
-from chatvat.bot_template.src.constants import DEFAULT_LLM_MODEL
+from chatvat.core.vector import get_vector_db
+from chatvat.config_loader import load_runtime_config
+from chatvat.constants import DEFAULT_LLM_MODEL
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +41,8 @@ class RagEngine:
 
         self.llm = ChatGroq(
             temperature=0.3, # Low temp for factual answers
-            model_name=DEFAULT_LLM_MODEL,
-            groq_api_key=api_key
+            model=DEFAULT_LLM_MODEL,
+            api_key=api_key # type: ignore
         )
 
         # Get the Retriever from our Thread-Safe Singleton
@@ -73,7 +73,7 @@ class RagEngine:
         # Limit to 1000 chars to prevent massive context flooding
         clean_query = query[:1000]
         # Remove null bytes or control characters
-        clean_query = re.sub(r'[\x00-\x1f\x7f]', '', clean_query)
+        clean_query = re.sub(r'[\x00-\x1f\x7f]', '', clean_query) # type: ignore
         return clean_query.strip()
 
     def get_response(self, user_query: str) -> str:

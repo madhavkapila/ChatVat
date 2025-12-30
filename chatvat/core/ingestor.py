@@ -4,14 +4,12 @@ import asyncio
 import logging
 from typing import List, Dict, Any
 
-# LangChain imports
 from langchain_core.documents import Document
 
-# Local Imports
-from chatvat.bot_template.src.connectors.crawler import RuntimeCrawler
-from chatvat.bot_template.src.connectors.loader import RuntimeJsonLoader
-from chatvat.bot_template.src.core.vector import get_vector_db
-from chatvat.bot_template.src.config_loader import load_runtime_config 
+from chatvat.connectors.crawler import RuntimeCrawler
+from chatvat.connectors.loader import RuntimeJsonLoader
+from chatvat.core.vector import get_vector_db
+from chatvat.config_loader import load_runtime_config 
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +33,7 @@ class IngestionEngine:
             return [Document(page_content=markdown, metadata={"source": target, "type": "url"})]
         return []
 
-    async def _process_dynamic_json(self, target: str, headers: Dict[str, Any] = None) -> List[Document]:
+    async def _process_dynamic_json(self, target: str, headers: Dict[str, Any] = None) -> List[Document]: #type: ignore
         """Strategy for API Endpoints (with Auth)"""
         # Call the loader with headers
         text_chunks = await self.loader.load_and_transform(target, headers=headers)

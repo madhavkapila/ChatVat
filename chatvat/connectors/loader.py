@@ -23,7 +23,7 @@ class RuntimeJsonLoader:
             # disable_ssl=True helps with older corporate servers, but need to be careful in high-security contexts.
             async with aiohttp.ClientSession() as session:
                 
-                async with session.get(url, headers=headers, timeout=30) as response:
+                async with session.get(url, headers=headers, timeout=30) as response: # type: ignore
                     
                     if response.status == 200:
                         return await response.json()

@@ -9,14 +9,14 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from chatvat.bot_template.src.core.engine import get_rag_engine
-from chatvat.bot_template.src.core.ingestor import run_ingestion
-from chatvat.bot_template.src.constants import APP_VERSION, APP_NAME
-from chatvat.bot_template.src.config_loader import load_runtime_config
-from chatvat.bot_template.src.utils.logger import setup_logging
+from chatvat.core.engine import get_rag_engine
+from chatvat.core.ingestor import run_ingestion
+from chatvat.constants import APP_VERSION, APP_NAME
+from chatvat.config_loader import load_runtime_config
+from chatvat.utils.logger import setup_runtime_logging
 
 # Setup Logging
-logger = setup_logging()
+logger = setup_runtime_logging()
 
 # --- Pydantic Models for API ---
 class ChatRequest(BaseModel):
