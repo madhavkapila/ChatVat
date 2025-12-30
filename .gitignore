@@ -154,3 +154,5 @@ debug_crawler.py
 
 poetry.lock
 poetry.lock.bak
+
+pypi_config.txt

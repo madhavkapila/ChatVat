@@ -1,45 +1,80 @@
 [tool.poetry]
 name = "chatvat"
-version = "0.1.0"
-description = "A universal RAG chatbot builder CLI."
+version = "0.1.5"
+description = "The Universal RAG Chatbot Factory. Zero-dependency AI deployments."
 authors = ["Madhav Kapila <smartatk04@gmail.com>"]
 readme = "README.md"
 license = "Proprietary"
+
+repository = "https://github.com/madhavkapila/ChatVat.git"
+homepage = "https://github.com/madhavkapila"
+
 classifiers = [
     "License :: Other/Proprietary License",
-    "Private :: Do Not Upload"
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11"
 ]
 
 # CRITICAL: This ensures 'bot_template' is packed inside the wheel.
-# Since we are using Poetry, we use this 'include' list, NOT setuptools.
 include = ["chatvat/bot_template/**/*"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
 
 # --- CLI Dependencies (For 'chatvat init') ---
+# ONLY these are installed by default. This keeps it small.
 typer = {extras = ["all"], version = "^0.12.3"}
 rich = "^13.7.0"
 pyfiglet = "^1.0.2"
 pydantic = "^2.0.0"
-
-# --- Runtime/Engine Dependencies (For the Bot itself) ---
-# Added these because your library now contains the core logic
-fastapi = "^0.109.0"
-uvicorn = {extras = ["standard"], version = "^0.27.0"}
 python-dotenv = "^1.0.0"
 requests = "^2.31.0"
 
-# AI & RAG Stack
-langchain = "^0.1.0"
-langchain-community = "^0.0.10"
-langchain-openai = "^0.0.2"
-chromadb = "^0.4.22"
-openai = "^1.10.0"
-tiktoken = "^0.5.2"
+# --- Runtime/Engine Dependencies (MOVED TO OPTIONAL) ---
+# These are used inside the Docker container, not by the CLI.
+fastapi = { version = "^0.109.0", optional = true }
+uvicorn = {extras = ["standard"], version = "^0.27.0", optional = true}
+playwright = { version = "^1.40.0", optional = true }
 
-# Crawler Utilities
-beautifulsoup4 = "^4.12.0"
+# --- AI & RAG Stack (MOVED TO OPTIONAL) ---
+langchain = { version = "^0.3.0", optional = true }
+langchain-community = { version = "^0.3.0", optional = true }
+langchain-chroma = { version = "^0.2.0", optional = true }
+langchain-groq = { version = "^0.2.0", optional = true }
+chromadb = { version = "^0.5.0", optional = true }
+openai = { version = "^1.10.0", optional = true }
+tiktoken = { version = "^0.7.0", optional = true }
+
+# --- OPTIONAL ENGINE DEPENDENCIES ---
+torch = { version = "^2.2.0", optional = true }
+langchain-huggingface = { version = "^0.1.0", optional = true }
+langchain-openai = { version = "^0.2.0", optional = true }
+crawl4ai = { version = "^0.4.0", optional = true }
+pypdf = { version = "^4.0.0", optional = true }
+beautifulsoup4 = { version = "^4.12.0", optional = true }
+
+[tool.poetry.extras]
+# Users run: pip install "chatvat[engine]" if they want to run the code locally.
+engine = [
+    "fastapi",
+    "uvicorn",
+    "playwright",
+    "langchain",
+    "langchain-community",
+    "langchain-chroma",
+    "langchain-groq",
+    "chromadb",
+    "openai",
+    "tiktoken",
+    "torch",
+    "langchain-huggingface",
+    "langchain-openai",
+    "crawl4ai",
+    "pypdf",
+    "beautifulsoup4"
+]
 
 [tool.poetry.scripts]
 chatvat = "chatvat.main:app"
