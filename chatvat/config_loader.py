@@ -1,4 +1,4 @@
-# FILE: chatvat/bot_template/src/config_loader.py
+# FILE: chatvat/config_loader.py
 
 import json
 import os
@@ -9,11 +9,14 @@ import re
 
 logger = logging.getLogger(__name__)
 
-CONFIG_PATH = os.getenv("CONFIG_PATH", "/app/config.json")
+# In Docker, WORKDIR is /app, so this resolves to /app/chatvat.config.json
+# On Local Dev, this resolves to the user's project folder.
+CONFIG_FILENAME = "chatvat.config.json"
+CONFIG_PATH = os.path.join(os.getcwd(), CONFIG_FILENAME)
 
 # --- Duplicate Schema Definitions ---
-# We duplicate these here so the runtime is independent of the CLI code.
-# This ensures the Docker image is self-contained.
+# These schemas match what is in config_schema.py but are duplicated here
+# to keep the runtime (this file) independent of the CLI dependencies.
 
 class DataSource(BaseModel):
     type: Literal["static_url", "dynamic_json", "local_file"]
@@ -40,14 +43,19 @@ def _expand_env_vars(data: dict) -> dict:
     
     def replacer(match):
         var_name = match.group(1)
-        # Get from ENV, or return empty string if missing (or keep original?)
-        # Returning match.group(0) keeps it as ${VAR} if missing, which is safer for debugging
+        # Get from ENV, or return empty string if missing
         return os.environ.get(var_name, match.group(0))
     
     new_json_str = pattern.sub(replacer, json_str)
     return json.loads(new_json_str)
 
 def load_runtime_config() -> Optional[RuntimeConfig]:
+    """
+    Loads and validates the configuration from the CWD.
+    """
+    # Debug print to confirm where it is looking (Visible in Docker Logs)
+    logger.info(f"🔍 Loading config from: {CONFIG_PATH}")
+    
     if not os.path.exists(CONFIG_PATH):
         logger.error(f"Config file missing at {CONFIG_PATH}")
         return None

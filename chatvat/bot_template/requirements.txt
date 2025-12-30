@@ -13,6 +13,7 @@ fastapi[standard]>=0.109.0
 python-dotenv>=1.0.0
 
 # --- The "Eyes" (Crawling Engine) ---
+beautifulsoup4
 # This runs the background crawling loop inside the container.
 # We need 'crawl4ai' for the headless browser logic.
 crawl4ai>=0.4.0
@@ -25,14 +26,19 @@ playwright>=1.40.0
 chromadb>=0.4.22
 # Specialized splitters for Markdown (better than generic text splitters).
 langchain-text-splitters>=0.0.1
+langchain-chroma>=0.1.0
 
 # --- The "Intelligence" (LLM Integration) ---
 # Specific integration for Groq (Llama-3 models).
 langchain-groq>=0.0.1
 # For generating embeddings (e.g., HuggingFace models).
 langchain-huggingface>=0.0.1
+huggingface-hub
 # Core LangChain utilities
 langchain-core>=0.1.0
+sentence-transformers
+langchain>=0.2.0
+langchain-community
 
 # --- Utilities ---
 # For robust async HTTP calls (used by our JSON loader).

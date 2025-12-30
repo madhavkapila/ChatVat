@@ -42,7 +42,7 @@ class RagEngine:
         self.llm = ChatGroq(
             temperature=0.3, # Low temp for factual answers
             model=DEFAULT_LLM_MODEL,
-            api_key=api_key # type: ignore
+            api_key=api_key
         )
 
         # Get the Retriever from our Thread-Safe Singleton

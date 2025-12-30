@@ -12,9 +12,9 @@ from langchain_core.documents import Document
 
 
 from chatvat.constants import (
-    DB_PATH,                                         # type: ignore
-    COLLECTION_NAME,                                 # type: ignore
-    EMBEDDING_MODEL_NAME                             # type: ignore
+    DB_PATH,               
+    COLLECTION_NAME,                                
+    DEFAULT_EMBEDDING_MODEL                       
 )
 
 logger = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ class VectorManager:
         
         try:
             # Setup Embedding Function (HuggingFace)
-            self.embedding_fn = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
+            self.embedding_fn = HuggingFaceEmbeddings(model_name=DEFAULT_EMBEDDING_MODEL)
             
             # Setup Persistent Client
             self.client = chromadb.PersistentClient(
@@ -78,25 +78,39 @@ class VectorManager:
 
     def upsert_documents(self, documents: List[Document]):
         """
-        Thread-safe write operation.
-        Blocks reading while writing to prevent race conditions.
+        Thread-safe write operation with DEDUPLICATION.
         """
         if not documents:
             return
 
         with self.write_lock:
             try:
-                count = len(documents)
-                logger.info(f"🔒 Lock Acquired. Upserting {count} documents...")
+                count_initial = len(documents)
                 
-                # Use Hash of content as ID to prevent duplicates
-                # (Simple deduplication strategy)
-                ids = [str(hash(doc.page_content)) for doc in documents]
+                unique_map = {}
+                for doc in documents:
+                    # Generate ID based on content hash
+                    doc_id = str(hash(doc.page_content))
+                    
+                    # Only keep the first occurrence of this ID
+                    if doc_id not in unique_map:
+                        unique_map[doc_id] = doc
                 
-                # Add to Chroma
-                self.vector_store.add_documents(documents=documents, ids=ids)
+                # Extract clean lists
+                ids = list(unique_map.keys())
+                clean_docs = list(unique_map.values())
+                count_final = len(clean_docs)
                 
-                logger.info(f"🔓 Upsert Complete. Lock Released.")
+                if count_initial != count_final:
+                    logger.warning(f"⚠️ Dropped {count_initial - count_final} duplicate documents.")
+
+                if clean_docs:
+                    logger.info(f"🔒 Lock Acquired. Upserting {count_final} unique documents...")
+                    self.vector_store.add_documents(documents=clean_docs, ids=ids)
+                    logger.info(f"🔓 Upsert Complete. Lock Released.")
+                else:
+                    logger.warning("⚠️ No unique documents to upload.")
+                    
             except Exception as e:
                 logger.error(f"Error during upsert: {e}")
 

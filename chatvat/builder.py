@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import json
 import sys
+import chatvat  
 from chatvat.utils.logger import log_info, log_error, log_success, log_warning
 from rich.prompt import Confirm
 
@@ -19,14 +20,42 @@ def clean_dist_folder(dist_path: str):
             log_error(f"Could not clean 'dist' folder: {e}", fatal=True)
     os.makedirs(dist_path)
 
-def copy_template_files(src_dir: str, dist_dir: str):
+def copy_source_code(dist_dir: str):
     """
-    Copies the bot logic from the template to the build folder.
-    Excludes python cache and git files to keep the build clean.
+    [NEW LOGIC] SOURCE INJECTION
+    Instead of pip installing, we copy the 'chatvat' python package directly 
+    into the container. This ensures Dev/Prod parity without internet access.
+    """
+    # 1. Locate the actual library on the host machine
+    library_path = os.path.dirname(chatvat.__file__)
+    
+    # 2. Destination: dist/chatvat (So 'import chatvat' works inside /app)
+    destination = os.path.join(dist_dir, "chatvat")
+    
+    log_info(f"🧠 Injecting Core Engine from {library_path}...")
+    
+    try:
+        # We exclude 'bot_template' to avoid recursion (we copy that separately)
+        # We exclude git/cache files to keep the Docker image small.
+        shutil.copytree(
+            library_path, 
+            destination, 
+            dirs_exist_ok=True,
+            ignore=shutil.ignore_patterns(
+                'bot_template', '__pycache__', '*.pyc', '.git', '.DS_Store'
+            )
+        )
+    except Exception as e:
+        log_error(f"Failed to inject source code: {e}", fatal=True)
+
+def copy_template_files(template_dir: str, dist_dir: str):
+    """
+    Copies the bot logic (Dockerfile, src/main.py) from the template to the build folder.
+    This overlays the entry points ON TOP of the injected engine.
     """
     try:
         shutil.copytree(
-            src_dir, 
+            template_dir, 
             dist_dir, 
             dirs_exist_ok=True,
             ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '.DS_Store', '.git')
@@ -36,15 +65,22 @@ def copy_template_files(src_dir: str, dist_dir: str):
 
 def inject_config(dist_dir: str):
     """
-    Copies the user's 'chatvat.config.json' into the build context.
+    Copies the user's 'chatvat.config.json' and '.env' into the build context.
     """
+    # [UPDATED] Use the standard config name
     config_src = "chatvat.config.json"
+    
     if not os.path.exists(config_src):
         log_error("Config file not found. Please run 'init' first.", fatal=True)
     
-    # Destination: dist/config.json (Root of the container app)
+    # Destination: dist/chatvat.config.json (Root of the container app)
     try:
-        shutil.copy(config_src, os.path.join(dist_dir, "config.json"))
+        shutil.copy(config_src, os.path.join(dist_dir, "chatvat.config.json"))
+        
+        # [NEW] Also inject secrets if they exist
+        if os.path.exists(".env"):
+            shutil.copy(".env", os.path.join(dist_dir, ".env"))
+            
     except Exception as e:
         log_error(f"Failed to inject config: {e}", fatal=True)
 
@@ -72,7 +108,9 @@ def run_docker_build(bot_name: str, dist_path: str) -> bool:
 
     # Run the actual build
     try:
+        # [UPDATED] No more build args needed. The code is already in the folder.
         cmd = ["docker", "build", "-t", tag_name, "."]
+        
         # We allow stdout to pass through so the user sees the build steps
         result = subprocess.run(cmd, cwd=dist_path, check=True)
         return True
@@ -105,13 +143,16 @@ def run_docker_build(bot_name: str, dist_path: str) -> bool:
 def build_bot():
     """
     Main entry point. 
-    1. Generates Code.
-    2. Builds Docker Image.
-    3. Cleans up Code (if successful) to maintain abstraction.
+    1. Prepares 'dist' folder.
+    2. Injects Core Engine (Source Code).
+    3. Injects Template & Configs.
+    4. Builds Docker Image.
+    5. Cleans up Code (if successful) to maintain abstraction.
     """
     # Setup Paths (Factory Mode)
-    factory_dir = os.path.dirname(os.path.abspath(__file__))
-    template_dir = os.path.join(factory_dir, "bot_template")
+    # [UPDATED] Dynamic Location using package path
+    library_path = os.path.dirname(chatvat.__file__)
+    template_dir = os.path.join(library_path, "bot_template")
     
     user_project_dir = os.getcwd()
     dist_dir = os.path.join(user_project_dir, "dist")
@@ -122,11 +163,19 @@ def build_bot():
     # Generate Intermediate Code
     log_info("📂 Preparing assembly line...")
     clean_dist_folder(dist_dir)
+    
+    # [NEW] Step 1: Inject the Brain (The Python Package)
+    copy_source_code(dist_dir)
+    
+    # Step 2: Inject the Body (The Dockerfile & Entrypoint)
     copy_template_files(template_dir, dist_dir)
+    
+    # Step 3: Inject the Soul (Configuration)
     inject_config(dist_dir)
 
     # 3. Get Bot Name
     try:
+        # [UPDATED] Filename correction
         config_path = os.path.join(user_project_dir, "chatvat.config.json")
         with open(config_path) as f:
             config = json.load(f)
@@ -154,6 +203,7 @@ def build_bot():
 
         print("\n" + "="*60)
         print(f"🚀 RUN COMMAND:")
+        # [UPDATED] Added --env-file so it picks up the .env from CWD
         print(f"docker run -d -p {port}:8000 --env-file .env {tag}")
         print("="*60 + "\n")
     else:
