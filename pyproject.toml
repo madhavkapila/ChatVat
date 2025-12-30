@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "chatvat"
+version = "0.1.0"
+description = "A universal RAG chatbot builder CLI."
+authors = ["Madhav Kapila <smartatk04@gmail.com>"]
+readme = "README.md"
+
+# CRITICAL: This line ensures 'bot_template' is packed inside the wheel
+# even if it contains non-python files (like Dockerfile, requirements.txt).
+include = ["chatvat/bot_template/**/*"] 
+
+[tool.poetry.dependencies]
+python = "^3.11"
+typer = {extras = ["all"], version = "^0.9.0"}
+rich = "^13.7.0"
+pyfiglet = "^1.0.2"
+pydantic = "^2.0.0"
+requests = "^2.31.0"
+
+[tool.poetry.scripts]
+chatvat = "chatvat.main:app"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

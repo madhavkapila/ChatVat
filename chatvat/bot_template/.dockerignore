@@ -1,0 +1,30 @@
+# FILE: chatvat/bot_template/.dockerignore
+
+# 1. Security (Never copy secrets into the image)
+.env
+.env.*
+*.key
+*.pem
+
+# 2. Python Cache & compiled files
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# 3. System / IDE files
+.git
+.gitignore
+.idea/
+.vscode/
+.DS_Store
+
+# 4. Local Data (Don't overwrite production DB with local testing DB)
+data/
+chroma_db/

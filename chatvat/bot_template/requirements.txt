@@ -1,0 +1,41 @@
+# FILE: chatvat/bot_template/requirements.txt
+
+# This MUST be at the top. It tells pip to look for wheels in the CPU repository first.
+# Prevents downloading massive CUDA (GPU) libraries, saving ~3GB of space.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
+
+# --- Core API Server ---
+# We use 'standard' to get 'uvicorn' and optimized JSON parsers automatically.
+# This replaces the need for a separate 'uvicorn' entry.
+fastapi[standard]>=0.109.0
+python-dotenv>=1.0.0
+
+# --- The "Eyes" (Crawling Engine) ---
+# This runs the background crawling loop inside the container.
+# We need 'crawl4ai' for the headless browser logic.
+crawl4ai>=0.4.0
+# 'playwright' is usually installed by crawl4ai, but we list it explicitily 
+# to ensure the container has the core engine ready.
+playwright>=1.40.0
+
+# --- The "Brain" (RAG & Vector DB) ---
+# We use ChromaDB for local vector storage.
+chromadb>=0.4.22
+# Specialized splitters for Markdown (better than generic text splitters).
+langchain-text-splitters>=0.0.1
+
+# --- The "Intelligence" (LLM Integration) ---
+# Specific integration for Groq (Llama-3 models).
+langchain-groq>=0.0.1
+# For generating embeddings (e.g., HuggingFace models).
+langchain-huggingface>=0.0.1
+# Core LangChain utilities
+langchain-core>=0.1.0
+
+# --- Utilities ---
+# For robust async HTTP calls (used by our JSON loader).
+aiohttp>=3.9.0
+# For structural validation (Pydantic V2).
+pydantic>=2.5.0
