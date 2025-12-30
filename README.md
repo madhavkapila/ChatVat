@@ -190,5 +190,5 @@ This software is **Proprietary (Closed Source)**.
 ---
 
 <p align="center">
-  Built with ❤️ by the <b>ChatVat Factory</b>.
+  Built with ❤️ by the <b>Madhav Kapila</b>.
 </p>
