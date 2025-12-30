@@ -1,4 +1,4 @@
-# ChatVat 🏭
+# ChatVat (The ChatBot🤖 Factory🏭)
 > **The Universal RAG Chatbot Factory**
 
 [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](#license)
