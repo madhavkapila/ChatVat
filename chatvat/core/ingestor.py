@@ -31,6 +31,16 @@ class IngestionEngine:
             add_start_index=True
         )
 
+    def _resolve_headers(self, headers: Dict[str, Any]) -> Dict[str, str]:
+        """resolves environment variables in headers"""
+        resolved = {}
+        for k, v in headers.items():
+            if isinstance(v, str):
+                resolved[k] = os.path.expandvars(v)
+            else:
+                resolved[k] = v
+        return resolved
+
     async def _process_static_url(self, target: str) -> List[Document]:
         """handles static/js websites"""
         markdown = await self.crawler.fetch_page(target)
@@ -109,7 +119,9 @@ class IngestionEngine:
                     
                     elif source.type == 'dynamic_json':
                         # Extract optional headers (Auth Keys) if they exist
-                        headers = getattr(source, 'headers', {})
+                        raw_headers = getattr(source, 'headers', {})
+                        # Resolve env vars (e.g. ${API_KEY})
+                        headers = self._resolve_headers(raw_headers)
                         new_docs = await self._process_dynamic_json(source.target, headers)
 
                     elif source.type == 'local_file':
