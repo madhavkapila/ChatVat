@@ -15,7 +15,6 @@ from chatvat.constants import APP_VERSION, APP_NAME
 from chatvat.config_loader import load_runtime_config
 from chatvat.utils.logger import setup_runtime_logging
 
-# Setup Logging
 logger = setup_runtime_logging()
 
 # --- Pydantic Models for API ---
@@ -25,8 +24,6 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     message: str
 
-# --- BACKGROUND WORKER LOGIC ---
-# This is the "SatBot Logic" that prevents deployment timeouts.
 async def background_ingestion_loop():
     """
     Runs ingestion based on the user's 'refresh_interval' setting.
@@ -45,7 +42,7 @@ async def background_ingestion_loop():
 
         logger.info("⏳ Background Ingestion Worker Started.")
     
-        # 1. Initial Run (Wait 5s for startup)
+        # Initial Run (Wait 5s for startup)
         await asyncio.sleep(5) 
         try:
             logger.info("🏁 Triggering Initial Ingestion...")
@@ -53,18 +50,13 @@ async def background_ingestion_loop():
         except Exception as e:
             logger.error(f"Initial ingestion failed: {e}")
 
-        # 2. Dynamic Loop Logic
-        # We load the config to see what the user wants
         config = load_runtime_config()
-    
-        # Default to 0 (No auto-update) if missing
         interval_minutes = getattr(config, 'refresh_interval_minutes', 0)
     
         if interval_minutes > 0:
             logger.info(f"🔄 Auto-Update enabled. Schedule: Every {interval_minutes} minutes.")
         
             while True:
-                # Convert minutes to seconds
                 sleep_seconds = interval_minutes * 60
                 await asyncio.sleep(sleep_seconds)
 
@@ -102,11 +94,10 @@ async def lifespan(app: FastAPI):
     except asyncio.CancelledError:
         pass
 
-# --- API APP SETUP ---
 app = FastAPI(
     title=APP_NAME,
     version=APP_VERSION,
-    lifespan=lifespan # Attach the lifespan logic
+    lifespan=lifespan
 )
 
 # CORS (Allow frontend access)

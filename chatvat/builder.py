@@ -10,9 +10,7 @@ from chatvat.utils.logger import log_info, log_error, log_success, log_warning
 from rich.prompt import Confirm
 
 def clean_dist_folder(dist_path: str):
-    """
-    Removes the 'dist/' folder to ensure a fresh build context.
-    """
+    """removes dist/ folder for fresh build"""
     if os.path.exists(dist_path):
         try:
             shutil.rmtree(dist_path)
@@ -21,22 +19,14 @@ def clean_dist_folder(dist_path: str):
     os.makedirs(dist_path)
 
 def copy_source_code(dist_dir: str):
-    """
-    [NEW LOGIC] SOURCE INJECTION
-    Instead of pip installing, we copy the 'chatvat' python package directly 
-    into the container. This ensures Dev/Prod parity without internet access.
-    """
-    # 1. Locate the actual library on the host machine
+    """copies chatvat package into container instead of pip installing"""
     library_path = os.path.dirname(chatvat.__file__)
-    
-    # 2. Destination: dist/chatvat (So 'import chatvat' works inside /app)
     destination = os.path.join(dist_dir, "chatvat")
     
     log_info(f"🧠 Injecting Core Engine from {library_path}...")
     
     try:
-        # We exclude 'bot_template' to avoid recursion (we copy that separately)
-        # We exclude git/cache files to keep the Docker image small.
+        # exclude bot_template (copy separately) and cache files
         shutil.copytree(
             library_path, 
             destination, 
@@ -49,10 +39,7 @@ def copy_source_code(dist_dir: str):
         log_error(f"Failed to inject source code: {e}", fatal=True)
 
 def copy_template_files(template_dir: str, dist_dir: str):
-    """
-    Copies the bot logic (Dockerfile, src/main.py) from the template to the build folder.
-    This overlays the entry points ON TOP of the injected engine.
-    """
+    """copies bot logic (Dockerfile, src/main.py) to build folder"""
     try:
         shutil.copytree(
             template_dir, 
@@ -64,30 +51,21 @@ def copy_template_files(template_dir: str, dist_dir: str):
         log_error(f"Failed to copy template files: {e}", fatal=True)
 
 def inject_config(dist_dir: str):
-    """
-    Copies the user's 'chatvat.config.json' and '.env' into the build context.
-    """
-    # [UPDATED] Use the standard config name
+    """copies chatvat.config.json into build context"""
     config_src = "chatvat.config.json"
     
     if not os.path.exists(config_src):
         log_error("Config file not found. Please run 'init' first.", fatal=True)
     
-    # Destination: dist/chatvat.config.json (Root of the container app)
     try:
         shutil.copy(config_src, os.path.join(dist_dir, "chatvat.config.json"))
-        
-        # # Also inject secrets if they exist
         # if os.path.exists(".env"):
         #     shutil.copy(".env", os.path.join(dist_dir, ".env"))
-            
     except Exception as e:
         log_error(f"Failed to inject config: {e}", fatal=True)
 
 def inject_local_files(dist_dir: str, config_path: str):
-    """
-    Scans the config for 'local_file' sources and copies them into the build context.
-    """
+    """finds local_file sources in config and copies them to build"""
     try:
         with open(config_path, 'r') as f:
             config = json.load(f)
@@ -97,7 +75,6 @@ def inject_local_files(dist_dir: str, config_path: str):
             if source.get("type") == "local_file":
                 target = source.get("target")
                 if os.path.exists(target):
-                    # Create a 'data' folder in dist to hold these files
                     dest_path = os.path.join(dist_dir, target)
                     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
                     shutil.copy(target, dest_path)
@@ -106,16 +83,12 @@ def inject_local_files(dist_dir: str, config_path: str):
         log_warning(f"Could not inject local files: {e}")
 
 def run_docker_build(bot_name: str, dist_path: str) -> bool:
-    """
-    Attempts to run 'docker build'.
-    Returns True if successful, False if Docker is missing/failed (Soft Fail).
-    """
-    # Sanitize bot name for Docker tag (lowercase, no spaces)
+    """runs docker build, returns True if success"""
     tag_name = bot_name.lower().replace(" ", "-")
     
     log_info(f"🐳 Attempting Docker Build for '{tag_name}'...")
     
-    # Check if Docker is installed/running
+    # check if docker is installed
     try:
         subprocess.run(
             ["docker", "--version"], 
@@ -127,17 +100,12 @@ def run_docker_build(bot_name: str, dist_path: str) -> bool:
         log_warning("Docker is not installed or not in your PATH.")
         return False
 
-    # Run the actual build
     try:
-        # [UPDATED] No more build args needed. The code is already in the folder.
         cmd = ["docker", "build", "-t", tag_name, "."]
-        
-        # We allow stdout to pass through so the user sees the build steps
         result = subprocess.run(cmd, cwd=dist_path, check=True)
         return True
     
     except subprocess.CalledProcessError:
-        # --- MODIFIED: Smart Retry Logic ---
         log_warning("Standard build failed. This often happens if Docker needs root permissions.")
         
         # Ask user for permission to try sudo

@@ -5,29 +5,20 @@ import asyncio
 import logging
 from typing import Dict, Any, List, Optional
 
-# Standard Logger setup
 logger = logging.getLogger(__name__)
 
 class RuntimeJsonLoader:
-    """
-    Fetches JSON from APIs and flattens it for embedding.
-    Supports Authentication Headers (e.g., Bearer Tokens).
-    """
+    """fetches json from apis and flattens for embedding"""
 
     async def fetch_json(self, url: str, headers: Optional[Dict[str, str]] = None) -> Optional[Any]:
-        """
-        Async HTTP GET with robust error handling and Auth support.
-        """
+        """async http get with auth support"""
         try:
-            # We create a session for the request
-            # disable_ssl=True helps with older corporate servers, but need to be careful in high-security contexts.
             async with aiohttp.ClientSession() as session:
-                
                 async with session.get(url, headers=headers, timeout=30) as response: # type: ignore
                     
                     if response.status == 200:
                         return await response.json()
-                    elif response.status == 401 or response.status == 403:
+                    elif response.status in [401, 403]:
                         logger.error(f"🔐 Auth Error ({response.status}) accessing {url}. Check your API Keys.")
                         return None
                     else:
@@ -39,10 +30,7 @@ class RuntimeJsonLoader:
             return None
 
     def flatten_data(self, data: Any, prefix: str = "") -> List[str]:
-        """
-        Recursively flattens nested JSON into 'Key: Value' strings.
-        (Same logic as before, just included for completeness)
-        """
+        """recursively flattens nested json into key: value strings"""
         chunks = []
         
         if isinstance(data, dict):
@@ -55,7 +43,6 @@ class RuntimeJsonLoader:
                 chunks.extend(self.flatten_data(item, prefix))
         
         else:
-            # Base Case: It's a value (int, string, bool)
             if data is not None and str(data).strip():
                 clean_value = str(data).strip()
                 chunks.append(f"{prefix}: {clean_value}")
@@ -63,9 +50,7 @@ class RuntimeJsonLoader:
         return chunks
 
     async def load_and_transform(self, url: str, headers: Optional[Dict[str, str]] = None) -> List[str]:
-        """
-        Main entry point. Fetches data (using optional Auth) and flattens it.
-        """
+        """fetch json and flatten it"""
         logger.info(f"Loading JSON API: {url}")
         
         # Pass the headers down to the fetcher

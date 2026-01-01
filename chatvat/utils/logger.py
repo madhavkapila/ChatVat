@@ -3,11 +3,7 @@ import logging
 from rich.console import Console
 from rich.theme import Theme
 
-# =========================================================
-# EXISTING CLI LOGGING (Unchanged - Your Tools use this)
-# =========================================================
-
-# Setup Rich Theme (Standardizing our colors)
+# colors for cli output
 theme_map = {
     "info": "cyan",
     "warning": "yellow",
@@ -26,27 +22,21 @@ def log_success(message: str):
     console.print(f"✅ {message}", style="success")
 
 def log_warning(message: str):
-    """Prints a warning in Yellow."""
+    """Prints a warning message in Yellow."""
     console.print(f"⚠️  {message}", style="warning")
 
 def log_error(message: str, fatal: bool = False):
-    """
-    Prints an error in Red. 
-    If fatal=True, it exits the CLI.
-    """
+    """ Prints an error message in Red.
+        if fatal=True it exits the whole cli"""
     console.print(f"❌ {message}", style="error")
     if fatal:
         sys.exit(1)
 
 def setup_runtime_logging(name: str = "chatvat"):
-    """
-    Configures standard python logging for the Docker container.
-    """
-    # Create the format string
+    """setup logging for docker container"""
     log_format = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
     date_format = "%Y-%m-%d %H:%M:%S"
 
-    # Configure the root logger
     logging.basicConfig(
         level=logging.INFO,
         format=log_format,

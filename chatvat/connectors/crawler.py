@@ -3,8 +3,6 @@ import logging
 from typing import Optional
 from urllib.parse import urlparse
 
-# We use the standard logger. In Docker, this outputs to the console
-# which can be viewed via 'docker logs'.
 logger = logging.getLogger(__name__)
 
 try:
@@ -14,10 +12,7 @@ except ImportError:
     raise
 
 class RuntimeCrawler:
-    """
-    The 'Eyes' of the bot inside the container.
-    Fetches static or dynamic (JS) websites and returns clean Markdown.
-    """
+    """fetches static/dynamic websites and returns markdown"""
 
     def __init__(self):
         # Configure the browser to run strictly in Headless mode (No GUI)
@@ -29,9 +24,7 @@ class RuntimeCrawler:
         )
 
     def _is_safe_url(self, url: str) -> bool:
-        """
-        SSRF Protection: Prevents the bot from accessing internal container network.
-        """
+        """ssrf protection - blocks internal network access"""
         try:
             parsed = urlparse(url)
             hostname = parsed.hostname
@@ -55,15 +48,12 @@ class RuntimeCrawler:
         logger.info(f"Crawling: {url}")
 
         try:
-            # Configuring the run
             run_config = CrawlerRunConfig(
-                cache_mode=CacheMode.BYPASS,      # Production bots need FRESH data
-                word_count_threshold=10,          # Skip empty/error pages
-                wait_for="body",                  # Wait until body is loaded (Basic JS wait)
-                # timeout=30                      # Default timeout
+                cache_mode=CacheMode.BYPASS,  # need fresh data
+                word_count_threshold=10,
+                wait_for="body",
             )
 
-            # Start the browser context
             async with AsyncWebCrawler(config=self.browser_config) as crawler:
                 result = await crawler.arun(url=url, config=run_config)
 
@@ -75,8 +65,6 @@ class RuntimeCrawler:
                     return None
 
         except Exception as e:
-            # GRACEFUL DEGRADATION:
-            # We catch the crash, log it, and return None.
-            # The ingestion loop will simply skip this URL and try the next one.
+            # log and skip, ingestion loop will try next url
             logger.exception(f"Critical Crawler Error on {url}")
             return None

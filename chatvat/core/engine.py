@@ -49,7 +49,6 @@ class RagEngine:
             api_key=api_key
         )
 
-        # Get the Retriever from our Thread-Safe Singleton
         self.db = get_vector_db()
         self.retriever = self.db.as_retriever(k=5) # Fetch top 5 relevant chunks
 
@@ -72,7 +71,7 @@ class RagEngine:
         """
         Basic Input Guard.
         1. Truncates super long inputs (Token Exhaustion defense).
-        2. Strips potential script injections (though LLMs handle this well, it's good practice).
+        2. Strips potential script injections
         """
         # Limit to 1000 chars to prevent massive context flooding
         clean_query = query[:1000]
@@ -85,10 +84,10 @@ class RagEngine:
         The Main RAG Chain.
         """
         try:
-            # 1. Sanitize
+            # Sanitize
             safe_query = self._sanitize_input(user_query)
             
-            # 2. Construct the "Sandwich" Prompt
+            # Construct the "Sandwich" Prompt
             # [System Instruction]
             # [Context]
             # [User Question]
@@ -108,7 +107,7 @@ class RagEngine:
                 """
             )
 
-            # 2. Build the Chain (LangChain Expression Language - LCEL)
+            # Build the Chain (LangChain Expression Language - LCEL)
             # Retrieval -> Format -> Prompt -> LLM -> String Output
             rag_chain = (
                 {"context": self.retriever, "question": RunnablePassthrough()}
@@ -117,7 +116,7 @@ class RagEngine:
                 | StrOutputParser()
             )
 
-            # 3. Execute
+            # Execute
             logger.info(f"🤔 Processing query: {user_query}")
             response = rag_chain.invoke(user_query)
             return response

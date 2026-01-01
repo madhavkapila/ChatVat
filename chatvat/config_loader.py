@@ -16,10 +16,7 @@ logger = logging.getLogger(__name__)
 CONFIG_FILENAME = "chatvat.config.json"
 CONFIG_PATH = os.path.join(os.getcwd(), CONFIG_FILENAME)
 
-# --- Duplicate Schema Definitions ---
-# These schemas match what is in config_schema.py but are duplicated here
-# to keep the runtime (this file) independent of the CLI dependencies.
-
+# duplicate schemas here so runtime doesnt need cli deps
 class DataSource(BaseModel):
     type: Literal["static_url", "dynamic_json", "local_file"]
     target: str
@@ -29,7 +26,7 @@ class RuntimeConfig(BaseModel):
     bot_name: str
     sources: List[DataSource] = Field(default_factory=list)
     system_prompt: Optional[str] = None
-    refresh_interval_minutes: int = 0  # Default 0 means "Never"
+    refresh_interval_minutes: int = 0
     port: int = 8000
     llm_model: str = DEFAULT_LLM_MODEL
     embedding_model: str = DEFAULT_EMBEDDING_MODEL
@@ -37,27 +34,20 @@ class RuntimeConfig(BaseModel):
 # --- Loader Logic ---
 
 def _expand_env_vars(data: dict) -> dict:
-    """
-    Recursively replaces strings like '${VAR_NAME}' with the value from os.environ.
-    """
-    # Convert dict to string for global replacement
+    """replaces ${VAR_NAME} with actual env value"""
     json_str = json.dumps(data)
     
-    # Regex to find ${VAR_NAME}
     pattern = re.compile(r'\$\{(\w+)\}')
     
     def replacer(match):
         var_name = match.group(1)
-        # Get from ENV, or return empty string if missing
-        return os.environ.get(var_name, match.group(0))
+        return os.environ.get(var_name, match.group(0))  # keep original if not found
     
     new_json_str = pattern.sub(replacer, json_str)
     return json.loads(new_json_str)
 
 def load_runtime_config() -> Optional[RuntimeConfig]:
-    """
-    Loads and validates the configuration from the CWD.
-    """
+    """loads config from current working dir"""
     # Debug print to confirm where it is looking (Visible in Docker Logs)
     logger.info(f"🔍 Loading config from: {CONFIG_PATH}")
     

@@ -18,13 +18,9 @@ from langchain_community.document_loaders import PyPDFLoader, TextLoader
 logger = logging.getLogger(__name__)
 
 class IngestionEngine:
-    """
-    Orchestrates the data pipeline.
-    Connects the Config -> Fetchers -> VectorDB.
-    """
+    """orchestrates data pipeline - config -> fetchers -> vectordb"""
 
     def __init__(self):
-        # Initialize tools once (reuse connections)
         self.crawler = RuntimeCrawler()
         self.loader = RuntimeJsonLoader()
         self.db = get_vector_db()
@@ -36,7 +32,7 @@ class IngestionEngine:
         )
 
     async def _process_static_url(self, target: str) -> List[Document]:
-        """Strategy for Static/JS Websites"""
+        """handles static/js websites"""
         markdown = await self.crawler.fetch_page(target)
         if markdown:
             # Create the raw giant document
@@ -49,13 +45,11 @@ class IngestionEngine:
         return []
 
     async def _process_dynamic_json(self, target: str, headers: Dict[str, Any] = None) -> List[Document]: #type: ignore
-        """Strategy for API Endpoints (with Auth)"""
-        # Call the loader with headers
+        """handles api endpoints with auth"""
         text_chunks = await self.loader.load_and_transform(target, headers=headers)
         
         documents = []
         for chunk in text_chunks:
-            # Create a separate document for every chunk so retrieval is granular
             doc = Document(
                 page_content=chunk, 
                 metadata={"source": target, "type": "json"}
@@ -64,7 +58,7 @@ class IngestionEngine:
         return documents
     
     async def _process_local_file(self, target: str) -> List[Document]:
-        """Strategy for Local Files"""
+        """handles local pdf/txt files"""
         if not os.path.exists(target):
             return []
         
@@ -115,7 +109,6 @@ class IngestionEngine:
                     
                     elif source.type == 'dynamic_json':
                         # Extract optional headers (Auth Keys) if they exist
-                        # We use getattr in case the field is missing in older configs
                         headers = getattr(source, 'headers', {})
                         new_docs = await self._process_dynamic_json(source.target, headers)
 
@@ -127,7 +120,7 @@ class IngestionEngine:
                         
                 except Exception as e:
                     logger.error(f"❌ Error processing {source.target}: {e}")
-                    # Continue to next source! Don't stop the whole bot.
+                    # continue to next source, dont stop the whole bot
 
             # 3. Batch Upsert to Database
             if all_docs:

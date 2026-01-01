@@ -4,13 +4,10 @@ import os
 from typing import List, Optional, Literal, Dict
 from pydantic import BaseModel, Field, field_validator
 
-# Valid Source Types
 SourceType = Literal["static_url", "dynamic_json", "local_file"]
 
 class DataSource(BaseModel):
-    """
-    Represents a single knowledge source provided by the user.
-    """
+    """a single knowledge source - url, api or file"""
     type: SourceType
     target: str = Field(..., description="URL or File Path")
     headers: Optional[Dict[str, str]] = Field(default_factory=dict, description="Auth headers for APIs")
@@ -27,7 +24,6 @@ class DataSource(BaseModel):
                 raise ValueError(f"Target '{v}' must be a valid URL starting with http/https")
         
         elif source_type == 'local_file':
-            # Critical Check: Does the file exist on the User's PC right now?
             if not os.path.exists(v):
                 raise ValueError(f"Local file not found: {v}")
         

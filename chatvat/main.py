@@ -27,10 +27,8 @@ app = typer.Typer(
 )
 console = Console()
 
-# --- ENVIRONMENT & SECRET MANAGEMENT ---
-
 def append_to_env(key: str, value: str):
-    """Safely appends or updates a secret in the .env file."""
+    """adds or updates key in .env file"""
     env_line = f"{key}={value}\n"
     
     if not os.path.exists(".env"):
@@ -42,20 +40,17 @@ def append_to_env(key: str, value: str):
         content = f.read()
     
     if key in content:
-        # Update existing key
         content = re.sub(f"^{key}=.*", f"{key}={value}", content, flags=re.MULTILINE)
         with open(".env", "w") as f:
             f.write(content)
     else:
-        # Append new key
         with open(".env", "a") as f:
             f.write(env_line)
 
 def resolve_env_var(value: str) -> str:
-    """Resolves ${VAR} from local .env for connection testing."""
+    """resolves ${VAR} from .env for connection testing"""
     if value.startswith("${") and value.endswith("}"):
         var_name = value[2:-1]
-        # Check environment first, then .env file
         if var_name in os.environ:
             return os.environ[var_name]
         
@@ -69,7 +64,7 @@ def resolve_env_var(value: str) -> str:
 # --- CONNECTION TESTER ---
 
 def test_connection(url: str, headers: Dict = None) -> bool: ##type: ignore
-    """Pings URL with resolved secrets to verify accessibility."""
+    """pings url to check if its accessible"""
     real_headers = {}
     if headers:
         for k, v in headers.items():
@@ -93,10 +88,8 @@ def test_connection(url: str, headers: Dict = None) -> bool: ##type: ignore
             console.print(f"  ❌ [red]Connection Error: {e}[/red]")
             return False
 
-# --- WIZARD LOGIC ---
-
 def ask_for_sources() -> List[DataSource]:
-    """The interactive loop for adding data sources."""
+    """interactive loop for adding data sources"""
     sources = []
     while True:
         console.print("\n[bold]Add a Knowledge Source[/bold]")
@@ -107,9 +100,8 @@ def ask_for_sources() -> List[DataSource]:
         target = Prompt.ask("Enter Target (URL or File Path)")
         headers = {}
         
-        should_add = True # Default to yes
+        should_add = True
         
-        # URL Logic
         if source_type in ["static_url", "dynamic_json"]:
             if not target.startswith("http"):
                 log_warning("URL should start with http:// or https://")
@@ -117,7 +109,7 @@ def ask_for_sources() -> List[DataSource]:
             success = test_connection(target)
             
             if not success:
-                # 1. Offer to fix Auth
+                # Offer to fix Auth
                 if Confirm.ask("⚠️  Connection failed. Do you need Auth Headers?"):
                     while True:
                         key = Prompt.ask("Header Name")
@@ -137,7 +129,6 @@ def ask_for_sources() -> List[DataSource]:
                     # Retest
                     success = test_connection(target, headers=headers)
 
-                # 2. Force Add Check (The Fix)
                 if not success:
                     console.print("[yellow]⚠️  Source is still unreachable.[/yellow]")
                     if not Confirm.ask("Force add this source anyway? (e.g. maybe it works inside the container)", default=True):
@@ -147,7 +138,6 @@ def ask_for_sources() -> List[DataSource]:
         elif source_type == "local_file":
             if not os.path.exists(target):
                 log_error(f"File not found: {target}")
-                # Force Add Check
                 if not Confirm.ask("File missing. Add anyway? (You must provide it later)", default=False):
                     should_add = False
             else:
@@ -178,10 +168,8 @@ def ask_for_sources() -> List[DataSource]:
 def print_banner():
     console.clear()
     try:
-        # Generate Standard ASCII Art
         ascii_art = pyfiglet.figlet_format("ChatVat", font="slant")
         
-        # Apply "Cyberpunk Gradient" (Manually blending colors)
         styled_text = Text()
         lines = ascii_art.split("\n")
         
@@ -197,9 +185,8 @@ def print_banner():
             styled_text.append(line + "\n", style=style)
 
     except Exception:
-        styled_text = Text("ChatVat", style="bold cyan") # Fallback
+        styled_text = Text("ChatVat", style="bold cyan")
 
-    # Create the Panel
     console.print(Panel(
         Align.center(styled_text),
         border_style="bright_blue",
@@ -236,7 +223,6 @@ def init():
     llm_model = Prompt.ask("Select Groq Model", default=DEFAULT_LLM_MODEL)
     embed_model = Prompt.ask("Select Embedding Model (HuggingFace)", default=DEFAULT_EMBEDDING_MODEL)
     
-    # 6. Save
     try:
         config = ProjectConfig(
             bot_name=bot_name, sources=sources, system_prompt=system_prompt,
@@ -259,9 +245,7 @@ def build():
 
 @app.callback(invoke_without_command=True)
 def main(ctx: typer.Context):
-    """
-    Entry Point. Interactive Menu Loop.
-    """
+    """main menu loop"""
     if ctx.invoked_subcommand is None:
         while True:
             print_banner()
