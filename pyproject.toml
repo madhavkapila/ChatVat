@@ -4,13 +4,13 @@ version = "0.1.6"
 description = "The Universal RAG Chatbot Factory. Zero-dependency AI deployments."
 authors = ["Madhav Kapila <smartatk04@gmail.com>"]
 readme = "README.md"
-license = "Proprietary"
+license = "Apache-2.0"
 
 repository = "https://github.com/madhavkapila/ChatVat.git"
 homepage = "https://github.com/madhavkapila"
 
 classifiers = [
-    "License :: Other/Proprietary License",
+    "License :: OSI Approved :: Apache Software License",
     "Topic :: Software Development :: Build Tools",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Operating System :: OS Independent",
