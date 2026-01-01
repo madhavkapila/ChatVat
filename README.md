@@ -174,19 +174,21 @@ POST /chat
 
 ---
 
-## ⚖️ License & Proprietary Notice
+## ⚠️ Disclaimer & Legal Notice
 
-**Copyright © 2025 Madhav Kapila. All Rights Reserved.**
+**Author:** Madhav Kapila
+**Project:** ChatVat - Conversational AI & Web Crawling Engine
 
-This software is **Proprietary (Closed Source)**.
+This software is provided for **educational and research purposes only**.
 
-* **Usage:** You are granted a limited license to use this tool for educational, private testing, or internal business purposes.
-* **Restrictions:**
-    * You **MAY NOT** copy, modify, redistribute, sell, or lease any part of the `chatvat` source code.
-    * You **MAY NOT** reverse engineer or attempt to extract the source code.
-    * You **MAY NOT** upload this package to public registries (like PyPI) or public repositories (like GitHub) without prior written permission.
+1.  **No Liability:** The author (Madhav Kapila) is not responsible for any damage caused by the use of this tool. This includes, but is not limited to:
+    * IP bans or blacklisting of your device/server.
+    * Legal consequences of crawling restricted or sensitive websites.
+    * Data loss or corruption on the user's local machine or target infrastructure.
+2.  **User Responsibility:** You, the user, acknowledge that you are solely responsible for compliance with all applicable laws and regulations (such as GDPR, CFAA, or Terms of Service of target websites) when using this software.
+3.  **"As Is" Warranty:** This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement.
 
-*All intellectual property rights remain exclusively with Madhav Kapila.*
+**By downloading, installing, or using this software, you agree to these terms.**
 
 ---
 
