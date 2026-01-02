@@ -4,12 +4,12 @@
 # Prevents downloading massive CUDA (GPU) libraries, saving ~3GB of space.
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch
-torchvision
 
 # --- Core API Server ---
 # We use 'standard' to get 'uvicorn' and optimized JSON parsers automatically.
 # This replaces the need for a separate 'uvicorn' entry.
-fastapi[standard]>=0.109.0
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
 python-dotenv>=1.0.0
 
 # --- The "Eyes" (Crawling Engine) ---

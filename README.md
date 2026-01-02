@@ -1,33 +1,35 @@
 # ChatVat (The ChatBot🤖 Factory🏭)
+
 > **The Universal RAG Chatbot Factory**
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![Style](https://img.shields.io/badge/Code%20Style-Black-000000.svg)](https://github.com/psf/black)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](https://github.com/madhavkapila/ChatVat)
 
 ---
 
 ## 🌟 The Vision
 
-**ChatVat** is not just another chatbot script. It is a **Manufacturing Plant** for self-contained AI systems. 
+**ChatVat** is not just another chatbot script. It is a **Manufacturing Plant** for self-contained AI systems.
 
-It solves the "It works on my machine" problem by adhering to a strict **"Zero-Dependency"** philosophy. ChatVat takes your raw data sources—websites, APIs, and documents—and fuses them with a production-grade RAG engine into a sealed Docker container. This "capsule" contains everything needed to run: the code, the database, the browser, and the API server.
+It solves the "It works on my machine" problem by adhering to a strict **"Zero-Dependency"** philosophy. ChatVat takes your raw data sources—websites, secured APIs, and documents—and fuses them with a production-grade RAG engine into a sealed Docker container. This "capsule" contains everything needed to run: the code, the database, the browser, and the API server.
 
-You can deploy a ChatVat bot anywhere: from a MacBook Air to an air-gapped server in Antarctica, without installing Python or git.
+You can deploy a ChatVat bot anywhere: from a MacBook Air to an air-gapped server in Antarctica, with nothing but Docker installed.
 
 ### Core Philosophy
-* **Production Parity:** The bot you test locally is bit-for-bit identical to the bot you deploy.
-* **Source Injection:** The engine code is "injected" directly into the container during the build. No external git clones or PyPI downloads are required inside the image.
-* **Self-Healing:** Built-in deduplication (MD5 Hashing), crash recovery, and "Ghost Entry" prevention.
+* **Split Architecture:** A lightweight CLI (~15MB) for management, and a heavy-duty Docker container for the AI engine. No more installing 3GB of CUDA drivers on your laptop just to run a build tool.
+* **Universal Connectivity:** Acts as a generic **MCP (Model Context Protocol)** connector. Can ingest data from any API using custom headers and auth keys.
+> Disclaimer :  We advise users to ensure they have authorized access to secured APIs and to follow the provider's guidelines when extracting data from sensitive APIs. Read the full disclaimer below for more details.  
+* **Self-Healing:** Built-in deduplication (Content Hashing), crash recovery, and "Ghost Entry" prevention.
+* **Production Parity:** The bot you test locally is bit-for-bit identical to the bot you deploy, thanks to baked-in browser binaries.
 
 ---
 
 ## ⚡ Quick Start
 
 ### 1. Installation
-Install the ChatVat CLI from the source (or your private registry).
+Install the lightweight ChatVat CLI. (It installs in seconds and won't bloat your system).
 
 ```bash
 pip install chatvat
@@ -45,7 +47,7 @@ chatvat init
 *The wizard will guide you through:*
 * **Naming your bot**
 * **Setting up AI Brain** (Groq Llama-3 + HuggingFace Embeddings)
-* **Connecting Data Sources** (URLs, APIs, or Local Files)
+* **Connecting Data Sources** (URLs, Secured APIs, or Local Files)
 * **Defining Deployment Ports**
 
 ### 3. Build the Capsule
@@ -55,16 +57,19 @@ Compile your configuration and the ChatVat engine into a Docker Image.
 chatvat build
 ```
 
-> **What happens here?** > The CLI locates the `chatvat` library on your system, copies the core engine code into a build context, injects your `chatvat.config.json`, and triggers a Docker build. The result is a sealed image containing your specific bot.
+> **What happens here?**
+> The CLI performs **Source Injection**: it copies the core engine code into a build context, injects your `chatvat.config.json`, and triggers a multi-stage Docker build. It optimizes the image by installing specific browser binaries (Chromium only) and purging build tools, keeping the final image lean.
 
 ### 4. Deploy Anywhere
-Run your bot using standard Docker commands. It injects your API keys at runtime for security.
+Run your bot using standard Docker commands. Note the use of `--ipc=host` to prevent browser crashes on memory-heavy sites.
 
 ```bash
 # Example: Running on Port 8000
 docker run -d \
   -p 8000:8000 \
   --env-file .env \
+  --ipc=host \
+  --restart always \
   --name crypto-bot \
   chatvat-bot
 ```
@@ -75,25 +80,24 @@ docker run -d \
 
 ChatVat implements a modular **RAG (Retrieval-Augmented Generation)** pipeline designed for resilience.
 
-
 ### The Components
 
 | Component | Role | Description |
 | :--- | :--- | :--- |
-| **The Cortex** | Intelligence | Powered by **Groq** for ultra-fast inference using the model of your choice and **HuggingFace** for embeddings. |
-| **The Memory** | Vector Store | A persistent, thread-safe **ChromaDB** instance. It uses MD5 hashing to prevent duplicate data entry. |
-| **The Eyes** | Crawler | A headless **Chromium** browser (via Crawl4AI/Playwright) capable of reading dynamic JS-heavy websites. |
-| **The Nervous System** | Ingestor | A background worker that auto-updates knowledge every `X` minutes (configurable). |
+| **The Builder** | CLI Manager | Runs on host. Lightweight (~15MB). Orchestrates the factory process and Docker builds. |
+| **The Cortex** | Intelligence | Powered by **Groq** for ultra-fast inference and **HuggingFace** for embeddings. Runs inside Docker. |
+| **The Memory** | Vector Store | A persistent, thread-safe **ChromaDB** instance. Uses MD5 hashing to silently drop duplicate data during ingestion. |
+| **The Eyes** | Crawler | A headless **Chromium** browser (via Crawl4AI/Playwright) managed with `--ipc=host` stability to read dynamic JS websites. |
+| **The Connector** | Universal MCP | A polymorphic ingestor that can authenticate with secured APIs using environment-variable masking (e.g., `${API_KEY}`). |
 | **The API** | Interface | A high-performance **FastAPI** server exposing REST endpoints. |
 
-### The "Source Injection" Workflow
+### The "Split Strategy" Workflow
 
-Unlike traditional builds that `pip install` libraries from the internet, ChatVat performs **Source Injection**:
+Unlike traditional tools that force you to install heavy AI libraries locally:
 
-1.  **Locate:** The CLI finds where `chatvat` is installed on your host machine.
-2.  **Extract:** It copies the raw Python source code of the engine.
-3.  **Inject:** It places this code into the `/app` directory of the Docker container.
-4.  **Seal:** The Dockerfile sets `PYTHONPATH=/app`, making the injected code instantly executable without installation.
+1.  **Local (Host):** You only have `typer`, `rich`, and `requests`. Fast and clean.
+2.  **Container (Engine):** The Docker build installs `torch`, `langchain`, `playwright`, and `chromadb`.
+3.  **Result:** You get the power of a heavy AI stack without polluting your local development environment.
 
 ---
 
@@ -112,13 +116,14 @@ Your bot is defined by `chatvat.config.json`. You can edit this file manually af
     "sources": [
         {
             "type": "static_url",
-            "target": "[https://www.amazon.com/gp/bestsellers/books/ref=zg_bs_nav](https://www.amazon.com/gp/bestsellers/books/ref=zg_bs_nav)"
+            "target": "[https://docs.stripe.com](https://docs.stripe.com)"
         },
         {
             "type": "dynamic_json",
-            "target": "[https://YOUR_API_ENDPOINT](https://YOUR_API_ENDPOINT)",
+            "target": "[https://api.github.com/repos/my-org/my-repo/issues](https://api.github.com/repos/my-org/my-repo/issues)",
             "headers": {
-                "Authorization": "Bearer ${API_KEY}"
+                "Authorization": "Bearer ${GITHUB_TOKEN}",
+                "Accept": "application/vnd.github.v3+json"
             }
         },
         {
@@ -130,8 +135,10 @@ Your bot is defined by `chatvat.config.json`. You can edit this file manually af
 ```
 
 * **`refresh_interval_minutes`**: Set to `0` to disable auto-updates.
-* **`sources`**: Supports `static_url` (Websites), `dynamic_json` (REST APIs), and `local_file` (PDF/TXT).
-* **`headers`**: Can use `${VAR_NAME}` syntax to reference environment variables from your `.env` file.
+* **`static_url`**: Uses Playwright to render JavaScript before scraping.
+* **`dynamic_json`**: Acts as a Universal Connector. Supports custom headers.
+* **`headers`**: Securely inject secrets using `${VAR_NAME}` syntax. The engine resolves these from the container's environment variables at runtime.
+* **`llm-model`**: You can select your required Groq LLM model while initialising the ChatBot. 
 
 ---
 
@@ -149,7 +156,7 @@ GET /health
 ```json
 {
   "status": "healthy",
-  "version": "0.1.0"
+  "version": "0.1.9"
 }
 ```
 
@@ -162,13 +169,13 @@ POST /chat
 **Payload:**
 ```json
 {
-  "message": "What events are happening on Day 1?"
+  "message": "What is the return policy for digital items?"
 }
 ```
 **Response:**
 ```json
 {
-  "message": "On Day 1, the opening ceremony starts at 10 AM..."
+  "message": "According to the policy document, digital items are non-refundable once downloaded..."
 }
 ```
 
@@ -193,5 +200,5 @@ This software is provided for **educational and research purposes only**.
 ---
 
 <p align="center">
-  Built with ❤️ by the <b>Madhav Kapila</b>.
+  Built with ❤️ by <b>Madhav Kapila</b>.
 </p>

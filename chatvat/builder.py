@@ -197,7 +197,7 @@ def build_bot():
         print("\n" + "="*60)
         print(f"🚀 RUN COMMAND:")
         # [UPDATED] Added --env-file so it picks up the .env from CWD
-        print(f"docker run -d -p {port}:8000 --name {tag}_chatvat --env-file .env {tag}")
+        print(f"docker run -d --ipc=host -p {port}:8000 --name {tag}_chatvat --env-file .env {tag}")
         print("="*60 + "\n")
     else:
         # Fallback: Leave dist/ for the user to handle manually

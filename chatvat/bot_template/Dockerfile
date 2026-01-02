@@ -8,8 +8,8 @@ ENV PYTHONUNBUFFERED=1 \
     PLAYWRIGHT_BROWSERS_PATH=/usr/local/share/ms-playwright
 
 # 2. Install System Dependencies (Required for Chrome to run)
-# We do this early so it's cached.
-RUN apt-get update && apt-get install -y \
+# We do this early so it's cached. Added --no-install-recommends to reduce size.
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     build-essential \
     libasound2 \
@@ -30,9 +30,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # 4. NOW Install the Browsers (The "Eyes")
 # Since pip install is done, 'python -m playwright' will now work.
+# [OPTIMIZED] Only install chromium and cleanup caches immediately to save ~1.2GB.
 RUN mkdir -p $PLAYWRIGHT_BROWSERS_PATH && \
     python -m playwright install --with-deps chromium && \
-    chmod -R 755 $PLAYWRIGHT_BROWSERS_PATH
+    chmod -R 755 $PLAYWRIGHT_BROWSERS_PATH && \
+    rm -rf /root/.cache/pip && \
+    rm -rf /root/.cache/ms-playwright/firefox* && \
+    rm -rf /root/.cache/ms-playwright/webkit*
 
 # 5. Inject Source Code (The "Brain")
 COPY . .
@@ -41,7 +45,9 @@ COPY . .
 ENV PYTHONPATH=/app
 
 # 7. Security (Non-root user)
-RUN useradd -m -u 1000 chatvat-user && \
+# [OPTIMIZED] Clean up build tools before finalizing.
+RUN apt-get purge -y --auto-remove build-essential && \
+    useradd -m -u 1000 chatvat-user && \
     mkdir -p /app/data && \
     chown -R chatvat-user:chatvat-user /app
 
