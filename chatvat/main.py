@@ -27,12 +27,20 @@ app = typer.Typer(
 )
 console = Console()
 
-def append_to_env(key: str, value: str):
-    """adds or updates key in .env file"""
+def safe_append_to_env(key: str, value: str):
+    """
+    Safely adds or updates key in .env file.
+    - If value is EMPTY and key exists -> Keeps existing value (No overwrite).
+    - If value is EMPTY and key missing -> Sets key="".
+    - If value is PROVIDED -> Overwrites/Sets new value.
+    """
+    value = value.strip()
     env_line = f"{key}={value}\n"
     
+    # Create file if missing
     if not os.path.exists(".env"):
         with open(".env", "w") as f:
+            # If empty value provided for new file, write it as empty string
             f.write(f"# ChatVat Secrets\n{env_line}")
         return
 
@@ -40,12 +48,22 @@ def append_to_env(key: str, value: str):
         content = f.read()
     
     if key in content:
-        content = re.sub(f"^{key}=.*", f"{key}={value}", content, flags=re.MULTILINE)
-        with open(".env", "w") as f:
-            f.write(content)
+        # Key Exists
+        if not value:
+            # User gave empty input -> Preserve old value
+            log_info(f"Using existing value for {key}")
+            return
+        else:
+            # User gave new value -> Overwrite
+            content = re.sub(f"^{key}=.*", f"{key}={value}", content, flags=re.MULTILINE)
+            with open(".env", "w") as f:
+                f.write(content)
+            log_success(f"Updated {key}")
     else:
+        # Key Missing -> Append whatever we have (even if empty)
         with open(".env", "a") as f:
             f.write(env_line)
+        log_success(f"Set {key}")
 
 def resolve_env_var(value: str) -> str:
     """resolves ${VAR} from .env for connection testing"""
@@ -112,12 +130,18 @@ def ask_for_sources() -> List[DataSource]:
                 # Offer to fix Auth
                 if Confirm.ask("⚠️  Connection failed. Do you need Auth Headers?"):
                     while True:
+                        console.print("[dim]Tip: Use hyphens for headers (e.g. 'x-api-key')[/dim]")
                         key = Prompt.ask("Header Name")
-                        raw_value = Prompt.ask("Header Value")
+                        raw_value = Prompt.ask("Header Value (Leave empty to keep existing if reusing key)", default="")
                         
                         if Confirm.ask("Is this a secret?", default=True):
-                            var_name = Prompt.ask("Env Var Name", default=key.upper().replace("-", "_")+"_KEY")
-                            append_to_env(var_name, raw_value)
+                            # Default env var name: X-API-KEY -> X_API_KEY
+                            default_var_name = key.upper().replace("-", "_")
+                            var_name = Prompt.ask("Env Var Name", default=default_var_name)
+                            
+                            # Using SAFE append to handle updates/fallbacks
+                            safe_append_to_env(var_name, raw_value)
+                            
                             final_value = f"${{{var_name}}}"
                         else:
                             final_value = raw_value
@@ -203,9 +227,9 @@ def init():
     console.print(Panel.fit("🧙 Configuration Wizard", style="bold green"))
     
     # 1. Global Secrets
-    groq_key = Prompt.ask("Enter GROQ_API_KEY", password=True)
-    if groq_key:
-        append_to_env("GROQ_API_KEY", groq_key)
+    groq_key = Prompt.ask("Enter GROQ_API_KEY (Leave empty to keep existing)", password=True, default="")
+    # Using SAFE append to handle updates/fallbacks
+    safe_append_to_env("GROQ_API_KEY", groq_key)
 
     # 2. Project Config
     bot_name = Prompt.ask("🤖 Name your Bot", default="MyAssistant")
