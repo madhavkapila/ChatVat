@@ -1,6 +1,8 @@
 .venv/
 .env
 db/
+pypi_config.txt
+*.pypirc
 utils/test_firebase.py
 __pycache__/
 *.pyc

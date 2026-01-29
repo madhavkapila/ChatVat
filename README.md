@@ -4,11 +4,14 @@
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![Style](https://img.shields.io/badge/Code%20Style-Black-000000.svg)](https://github.com/psf/black)
-[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](https://github.com/madhavkapila/ChatVat)
+[![License](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
+
+[![Groq](https://img.shields.io/badge/Powered%20By-Groq-orange)](https://groq.com)
+[![LangChain](https://img.shields.io/badge/🦜🔗-LangChain-blue)](https://python.langchain.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
+[![ChromaDB](https://img.shields.io/badge/Vector_DB-Chroma-purple)](https://www.trychroma.com/)
 
 ---
-
 ## 🌟 The Vision
 
 **ChatVat** is not just another chatbot script. It is a **Manufacturing Plant** for self-contained AI systems.
