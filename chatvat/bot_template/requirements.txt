@@ -21,6 +21,10 @@ crawl4ai>=0.4.0
 # to ensure the container has the core engine ready.
 playwright>=1.40.0
 
+# Renders PDF pages to Markdown (Preserves tables, headers, layout)
+pymupdf4llm>=0.0.1 
+pandas>=2.0.0
+
 # --- The "Brain" (RAG & Vector DB) ---
 # We use ChromaDB for local vector storage.
 chromadb>=0.4.22

@@ -13,7 +13,7 @@ from chatvat.connectors.crawler import RuntimeCrawler
 from chatvat.connectors.loader import RuntimeJsonLoader
 from chatvat.core.vector import get_vector_db
 from chatvat.config_loader import load_runtime_config 
-from langchain_community.document_loaders import PyPDFLoader, TextLoader
+from langchain_community.document_loaders import TextLoader
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,8 @@ class IngestionEngine:
         self.splitter = RecursiveCharacterTextSplitter(
             chunk_size=500,
             chunk_overlap=100,
-            add_start_index=True
+            add_start_index=True,
+            separators=["\n\n", "\n", " ", ""] # Standard hierarchy
         )
 
     def _resolve_headers(self, headers: Dict[str, Any]) -> Dict[str, str]:
@@ -67,29 +68,100 @@ class IngestionEngine:
             documents.append(doc)
         return documents
     
-    async def _process_local_file(self, target: str) -> List[Document]:
-        """handles local pdf/txt files"""
-        if not os.path.exists(target):
+    ### Separate file methods for better error handling and future extensibility (e.g. add .docx support later) ###
+    
+    def _load_pdf(self, file_path: str) -> List[Document]:
+        """
+        Converts PDF to Markdown using PyMuPDF4LLM.
+        This preserves layout, tables, and headers for the LLM.
+        """
+        try:
+            import pymupdf4llm
+        except ImportError:
+            logger.error("pymupdf4llm is missing. Cannot process PDF.")
             return []
         
+        logger.info(f"📄 Converting PDF to Markdown (SOTA): {file_path}")
+
+        # Convert entire PDF to a single Markdown string.
+        # This ensures tables spanning pages aren't broken awkwardly.
+        md_text = pymupdf4llm.to_markdown(file_path)
+
+        # Create a Document object
+        return [Document(
+            page_content=md_text,
+            metadata={"source": file_path, "type": "pdf_markdown"}
+        )]
+    
+    def _load_csv_rows(self, file_path: str) -> List[Document]:
+        """
+        Generic CSV Handler.
+        Reads the header row of ANY csv and formats each row as:
+        'Header1: Value1\nHeader2: Value2...'
+        """
         try:
-            raw_docs = []
-            if target.endswith(".pdf"):
-                loader = PyPDFLoader(target)
-                raw_docs = loader.load()
-            else:
-                loader = TextLoader(target, encoding="utf-8")
-                raw_docs = loader.load()
+            from langchain_community.document_loaders import CSVLoader
+        except ImportError:
+            logger.error("langchain_community is missing. Cannot process CSV.")
+            return []
+
+        logger.info(f"📊 Loading CSV rows as documents: {file_path}")
+        
+        try:
+            # Loader automatically creates "Key: Value" strings for each row
+            loader = CSVLoader(file_path=file_path)
+            docs = loader.load()
             
-            # --- Split Local Files too ---
+            logger.info(f"   - Extracted {len(docs)} rows from CSV.")
+            return docs
+            
+        except Exception as e:
+            logger.error(f"Error parsing CSV {file_path}: {e}")
+            return []
+    
+    def _load_plain_text(self, file_path: str) -> List[Document]:
+        """Fallback for .txt or .md files"""
+        loader = TextLoader(file_path, encoding="utf-8")
+        return loader.load()
+    
+
+    async def _process_local_file(self, target: str) -> List[Document]:
+        """
+        The Dispatcher: Identifies file type and delegates to the specialist.
+        """
+        if not os.path.exists(target):
+            logger.warning(f"File not found: {target}")
+            return []
+        
+        # Identify File Extension
+        ext = os.path.splitext(target)[1].lower()
+        raw_docs = []
+
+        try:
+            # Dispatch to Handler
+            if ext == ".pdf":
+                raw_docs = self._load_pdf(target)
+            
+            elif ext == ".csv":
+                raw_docs = self._load_csv_rows(target)
+            
+            elif ext in [".txt", ".md"]:
+                raw_docs = self._load_plain_text(target)
+            
+            else:
+                logger.warning(f"Unsupported file type '{ext}' for {target}")
+                return []
+
+            # Split (If needed)
+            # Note: CSV rows are usually small enough, but we split anyway to be safe.
             if raw_docs:
                 chunks = self.splitter.split_documents(raw_docs)
-                logger.info(f"🔪 Split file {target} into {len(chunks)} chunks.")
+                logger.info(f"🔪 Processed {target} into {len(chunks)} searchable chunks.")
                 return chunks
-                
+
         except Exception as e:
-            logger.error(f"Failed to load {target}: {e}")
-            
+            logger.error(f"❌ Failed to process file {target}: {e}")
+        
         return []
 
     async def run_pipeline(self):
