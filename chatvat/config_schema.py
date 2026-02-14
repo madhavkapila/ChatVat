@@ -12,6 +12,14 @@ class DataSource(BaseModel):
     target: str = Field(..., description="URL or File Path")
     headers: Optional[Dict[str, str]] = Field(default_factory=dict, description="Auth headers for APIs")
 
+    # Recursive Crawler Settings 
+    max_depth: int = Field(default=1, ge=1, description="1 = Single Page, 2+ = Recursive")
+
+    # scope: 
+    # 'restrictive' = Only follow links that start with the target URL (e.g. amazon.com/books can follow amazon.com/books/123 but not amazon.com/electronics)
+    # 'domain' = Follow any link on the same domain (e.g. amazon.com/books can follow amazon.com/electronics)
+    recursion_scope: Literal["restrictive", "domain"] = "restrictive"
+
     @field_validator('target')
     @classmethod
     def validate_target(cls, v: str, info):

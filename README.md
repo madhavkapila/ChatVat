@@ -119,7 +119,9 @@ Your bot is defined by `chatvat.config.json`. You can edit this file manually af
     "sources": [
         {
             "type": "static_url",
-            "target": "[https://docs.stripe.com](https://docs.stripe.com)"
+            "target": "[https://docs.stripe.com](https://docs.stripe.com)",
+            "max_depth": 2,
+            "recursion_scope": "restrictive"
         },
         {
             "type": "dynamic_json",
@@ -137,8 +139,23 @@ Your bot is defined by `chatvat.config.json`. You can edit this file manually af
 }
 ```
 
+
+### Source Configuration
+
+| Field | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `type` | `string` | *required* | `"static_url"`, `"dynamic_json"`, or `"local_file"` |
+| `target` | `string` | *required* | URL or local file path |
+| `headers` | `object` | `{}` | Custom HTTP headers for API authentication |
+| `max_depth` | `int` | `1` | Crawl depth. `1` = single page, `2+` = follow links recursively |
+| `recursion_scope` | `string` | `"restrictive"` | `"restrictive"` = only follow links under the target path. `"domain"` = follow any link on the same domain |
+
+### Field Details
+
 * **`refresh_interval_minutes`**: Set to `0` to disable auto-updates.
 * **`static_url`**: Uses Playwright to render JavaScript before scraping.
+* **`max_depth`**: *(static_url only)* Controls how deep the crawler follows links. `1` = single page (default), `2+` = recursive BFS crawl.
+* **`recursion_scope`**: *(static_url only)* Controls which links the crawler follows. `"restrictive"` (default) = only links under the target path, `"domain"` = any same-domain link.
 * **`dynamic_json`**: Acts as a Universal Connector. Supports custom headers.
 * **`headers`**: Securely inject secrets using `${VAR_NAME}` syntax. The engine resolves these from the container's environment variables at runtime.
 * **`llm-model`**: You can select your required Groq LLM model while initialising the ChatBot. 

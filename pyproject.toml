@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "chatvat"
-version = "0.1.13"
+version = "0.2.0"
 description = "The Universal RAG Chatbot Factory. Zero-dependency AI deployments."
 authors = ["Madhav Kapila <smartatk04@gmail.com>"]
 readme = "README.md"
@@ -54,6 +54,7 @@ langchain-openai = { version = "^0.2.0", optional = true }
 crawl4ai = { version = "^0.4.0", optional = true }
 pypdf = { version = "^4.0.0", optional = true }
 beautifulsoup4 = { version = "^4.12.0", optional = true }
+trafilatura = { version = "^1.0.0", optional = true }
 
 [tool.poetry.extras]
 # Users run: pip install "chatvat[engine]" if they want to run the code locally.
@@ -73,7 +74,8 @@ engine = [
     "langchain-openai",
     "crawl4ai",
     "pypdf",
-    "beautifulsoup4"
+    "beautifulsoup4",
+    "trafilatura"
 ]
 
 [tool.poetry.scripts]
