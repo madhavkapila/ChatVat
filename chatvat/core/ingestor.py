@@ -89,8 +89,8 @@ class IngestionEngine:
         semantic containers, cross-page frequency) — no keyword blacklists.
         """
         target = source_config.target
-        max_depth = getattr(source_config, "max_depth", 1)
-        scope = getattr(source_config, "recursion_scope", "restrictive")
+        max_depth = source_config.max_depth
+        scope = source_config.recursion_scope
 
         # Crawl (returns markdown + raw HTML per page)
         crawled_pages = await self.crawler.crawl_recursive(target, max_depth, scope)

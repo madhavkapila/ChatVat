@@ -22,6 +22,10 @@ class DataSource(BaseModel):
     target: str
     headers: Optional[Dict[str, str]] = {}
 
+    # Recursive Crawler Settings
+    max_depth: int = 1
+    recursion_scope: Literal["restrictive", "domain"] = "restrictive"
+
 class RuntimeConfig(BaseModel):
     bot_name: str
     sources: List[DataSource] = Field(default_factory=list)

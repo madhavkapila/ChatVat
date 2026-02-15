@@ -167,8 +167,23 @@ def ask_for_sources() -> List[DataSource]:
             else:
                 log_success("File verified.")
 
+        # Recursive Crawl Settings (Only relevant for static URLs)
+        max_depth = 1
+        recursion_scope = "restrictive"
+        if should_add and source_type == "static_url":
+            if Confirm.ask("🕷️  Enable Recursive Crawling? (Follow links on the page)", default=False):
+                max_depth = IntPrompt.ask("🔢 Max Crawl Depth (1 = Single Page, 2+ = Recursive)", default=2)
+                if max_depth < 1:
+                    max_depth = 1
+                recursion_scope = Prompt.ask(
+                    "🔒 Crawl Scope",
+                    choices=["restrictive", "domain"],
+                    default="restrictive"
+                )
+                console.print(f"[dim]  Scope: {recursion_scope} | Depth: {max_depth}[/dim]")
+
         if should_add:
-            source_obj = DataSource(type=source_type, target=target, headers=headers)# type: ignore
+            source_obj = DataSource(type=source_type, target=target, headers=headers, max_depth=max_depth, recursion_scope=recursion_scope)# type: ignore
             sources.append(source_obj)
             log_success(f"Added source: {target}")
         else:
@@ -180,8 +195,10 @@ def ask_for_sources() -> List[DataSource]:
             table.add_column("Type")
             table.add_column("Target")
             table.add_column("Auth Headers")
+            table.add_column("Depth")
+            table.add_column("Scope")
             for s in sources:
-                table.add_row(s.type, s.target, str(s.headers))
+                table.add_row(s.type, s.target, str(s.headers), str(s.max_depth), s.recursion_scope)
             console.print(table)
 
         if not Confirm.ask("Add another source?", default=False):
