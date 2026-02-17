@@ -13,7 +13,7 @@ from langchain_core.runnables import RunnablePassthrough
 
 from chatvat.core.vector import get_vector_db
 from chatvat.config_loader import load_runtime_config
-from chatvat.constants import DEFAULT_LLM_MODEL
+from chatvat.constants import DEFAULT_LLM_MODEL, DEFAULT_RETRIEVER_K
 from chatvat.config_loader import load_runtime_config
 
 logger = logging.getLogger(__name__)
@@ -50,8 +50,10 @@ class RagEngine:
             api_key=api_key
         )
 
+        retriever_k = config.retriever_k if config else DEFAULT_RETRIEVER_K
+
         self.db = get_vector_db()
-        self.retriever = self.db.as_retriever(k=5) # Fetch top 5 relevant chunks
+        self.retriever = self.db.as_retriever(k=retriever_k) # Fetch top K relevant chunks
 
     def _get_system_prompt(self) -> str:
         """

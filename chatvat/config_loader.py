@@ -7,7 +7,7 @@ from typing import List, Optional, Literal, Dict
 from pydantic import BaseModel, Field
 import re
 
-from chatvat.constants import DEFAULT_LLM_MODEL, DEFAULT_EMBEDDING_MODEL
+from chatvat.constants import DEFAULT_LLM_MODEL, DEFAULT_EMBEDDING_MODEL, DEFAULT_RETRIEVER_K
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +34,7 @@ class RuntimeConfig(BaseModel):
     port: int = 8000
     llm_model: str = DEFAULT_LLM_MODEL
     embedding_model: str = DEFAULT_EMBEDDING_MODEL
+    retriever_k: int = DEFAULT_RETRIEVER_K
 
 # --- Loader Logic ---
 

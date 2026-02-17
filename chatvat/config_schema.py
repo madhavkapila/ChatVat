@@ -60,3 +60,6 @@ class ProjectConfig(BaseModel):
     llm_model: str = Field(default="llama-3.3-70b-versatile")
     # Choice for embedding model which would be used to generate embeddings
     embedding_model: str = Field(default="all-MiniLM-L6-v2")
+
+    # Number of top relevant chunks to retrieve from vector DB
+    retriever_k: int = Field(default=5, ge=1, le=20, description="Number of top relevant chunks to fetch")

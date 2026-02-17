@@ -9,6 +9,7 @@ APP_VERSION = "0.1.0"
 # model defaults
 DEFAULT_LLM_MODEL = "llama-3.3-70b-versatile"
 DEFAULT_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+DEFAULT_RETRIEVER_K = 5  # Number of top relevant chunks to fetch from vector DB
 COLLECTION_NAME = "chatvat_store"
 
 # paths

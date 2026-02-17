@@ -116,6 +116,7 @@ Your bot is defined by `chatvat.config.json`. You can edit this file manually af
     "system_prompt": "You are a helpful assistant for the .....",
     "llm_model": "llama-3.1-70b-versatile",
     "embedding_model": "all-MiniLM-L6-v2",
+    "retriever_k": 5,
     "sources": [
         {
             "type": "static_url",
@@ -150,6 +151,18 @@ Your bot is defined by `chatvat.config.json`. You can edit this file manually af
 | `max_depth` | `int` | `1` | Crawl depth. `1` = single page, `2+` = follow links recursively |
 | `recursion_scope` | `string` | `"restrictive"` | `"restrictive"` = only follow links under the target path. `"domain"` = follow any link on the same domain |
 
+### Global Configuration
+
+| Field | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `bot_name` | `string` | *required* | Name of your chatbot |
+| `port` | `int` | `8000` | Deployment port for the FastAPI server |
+| `refresh_interval_minutes` | `int` | `0` | Auto-update interval in minutes (0 = disabled) |
+| `system_prompt` | `string` | *(default assistant prompt)* | Custom persona/system prompt for the LLM |
+| `llm_model` | `string` | `"llama-3.3-70b-versatile"` | Groq LLM model name |
+| `embedding_model` | `string` | `"all-MiniLM-L6-v2"` | HuggingFace embedding model |
+| `retriever_k` | `int` | `5` | Number of top relevant chunks to retrieve from vector DB (1-20) |
+
 ### Field Details
 
 * **`refresh_interval_minutes`**: Set to `0` to disable auto-updates.
@@ -158,7 +171,9 @@ Your bot is defined by `chatvat.config.json`. You can edit this file manually af
 * **`recursion_scope`**: *(static_url only)* Controls which links the crawler follows. `"restrictive"` (default) = only links under the target path, `"domain"` = any same-domain link.
 * **`dynamic_json`**: Acts as a Universal Connector. Supports custom headers.
 * **`headers`**: Securely inject secrets using `${VAR_NAME}` syntax. The engine resolves these from the container's environment variables at runtime.
-* **`llm-model`**: You can select your required Groq LLM model while initialising the ChatBot. 
+* **`llm_model`**: You can select your required Groq LLM model while initialising the ChatBot (e.g., `llama-3.3-70b-versatile`, `mixtral-8x7b-32768`).
+* **`embedding_model`**: HuggingFace model for generating text embeddings (e.g., `all-MiniLM-L6-v2`, `all-mpnet-base-v2`).
+* **`retriever_k`**: Controls how many relevant document chunks are retrieved from the vector database for each query. Higher values (e.g., 10-20) provide more context but may include less relevant information. Lower values (e.g., 2-3) are more focused but may miss contextual details. Default is 5. 
 
 ---
 

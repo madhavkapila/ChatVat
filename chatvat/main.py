@@ -16,7 +16,7 @@ from rich.prompt import Prompt, Confirm, IntPrompt
 from rich.table import Table
 
 from chatvat.config_schema import ProjectConfig, DataSource
-from chatvat.constants import DEFAULT_EMBEDDING_MODEL, DEFAULT_LLM_MODEL
+from chatvat.constants import DEFAULT_EMBEDDING_MODEL, DEFAULT_LLM_MODEL, DEFAULT_RETRIEVER_K
 from chatvat.utils.logger import log_info, log_error, log_success, log_warning
 from chatvat.builder import build_bot
 
@@ -263,12 +263,18 @@ def init():
     console.print("\n[bold]🧠 AI Model Configuration[/bold]")
     llm_model = Prompt.ask("Select Groq Model", default=DEFAULT_LLM_MODEL)
     embed_model = Prompt.ask("Select Embedding Model (HuggingFace)", default=DEFAULT_EMBEDDING_MODEL)
+    retriever_k = IntPrompt.ask("🔍 Top-K Chunks to Retrieve (1-20)", default=DEFAULT_RETRIEVER_K)
+    if retriever_k < 1:
+        retriever_k = 1
+    elif retriever_k > 20:
+        retriever_k = 20
     
     try:
         config = ProjectConfig(
             bot_name=bot_name, sources=sources, system_prompt=system_prompt,
             refresh_interval_minutes=refresh_minutes, port=port,
-            llm_model=llm_model, embedding_model=embed_model
+            llm_model=llm_model, embedding_model=embed_model,
+            retriever_k=retriever_k
         )
         with open("chatvat.config.json", "w") as f:
             f.write(config.model_dump_json(indent=4))
