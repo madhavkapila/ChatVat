@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "chatvat"
-version = "0.2.3"
+version = "0.2.4"
 description = "The Universal RAG Chatbot Factory. Zero-dependency AI deployments."
 authors = ["Madhav Kapila <smartatk04@gmail.com>"]
 readme = "README.md"

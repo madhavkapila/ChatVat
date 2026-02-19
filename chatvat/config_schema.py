@@ -63,3 +63,6 @@ class ProjectConfig(BaseModel):
 
     # Number of top relevant chunks to retrieve from vector DB
     retriever_k: int = Field(default=5, ge=1, le=20, description="Number of top relevant chunks to fetch")
+
+    #Max Tokens for LLM response
+    max_tokens: int = Field(default=400, ge=50, le=2000, description="Max tokens for LLM response to prevent token exhaustion")

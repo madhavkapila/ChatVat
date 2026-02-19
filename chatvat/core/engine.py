@@ -13,7 +13,7 @@ from langchain_core.runnables import RunnablePassthrough
 
 from chatvat.core.vector import get_vector_db
 from chatvat.config_loader import load_runtime_config
-from chatvat.constants import DEFAULT_LLM_MODEL, DEFAULT_RETRIEVER_K
+from chatvat.constants import DEFAULT_LLM_MODEL, DEFAULT_RETRIEVER_K, MAX_TOKENS
 from chatvat.config_loader import load_runtime_config
 
 logger = logging.getLogger(__name__)
@@ -43,11 +43,13 @@ class RagEngine:
         
         config = load_runtime_config()
         model_name = config.llm_model if config else DEFAULT_LLM_MODEL
+        max_tokens = config.max_tokens if config and config.max_tokens else MAX_TOKENS
 
         self.llm = ChatGroq(
             temperature=0.3, # Low temp for factual answers
             model=model_name,
-            api_key=api_key
+            api_key=api_key,
+            max_tokens=max_tokens, # Limit response length to prevent token exhaustion
         )
 
         retriever_k = config.retriever_k if config else DEFAULT_RETRIEVER_K

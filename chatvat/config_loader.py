@@ -7,7 +7,7 @@ from typing import List, Optional, Literal, Dict
 from pydantic import BaseModel, Field
 import re
 
-from chatvat.constants import DEFAULT_LLM_MODEL, DEFAULT_EMBEDDING_MODEL, DEFAULT_RETRIEVER_K
+from chatvat.constants import DEFAULT_LLM_MODEL, DEFAULT_EMBEDDING_MODEL, DEFAULT_RETRIEVER_K, MAX_TOKENS
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +35,7 @@ class RuntimeConfig(BaseModel):
     llm_model: str = DEFAULT_LLM_MODEL
     embedding_model: str = DEFAULT_EMBEDDING_MODEL
     retriever_k: int = DEFAULT_RETRIEVER_K
+    max_tokens: int = MAX_TOKENS
 
 # --- Loader Logic ---
 

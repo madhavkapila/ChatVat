@@ -117,6 +117,7 @@ Your bot is defined by `chatvat.config.json`. You can edit this file manually af
     "llm_model": "llama-3.1-70b-versatile",
     "embedding_model": "all-MiniLM-L6-v2",
     "retriever_k": 5,
+    "max_tokens": 400,
     "sources": [
         {
             "type": "static_url",
@@ -162,6 +163,7 @@ Your bot is defined by `chatvat.config.json`. You can edit this file manually af
 | `llm_model` | `string` | `"llama-3.3-70b-versatile"` | Groq LLM model name |
 | `embedding_model` | `string` | `"all-MiniLM-L6-v2"` | HuggingFace embedding model |
 | `retriever_k` | `int` | `5` | Number of top relevant chunks to retrieve from vector DB (1-20) |
+| `max_tokens` | `int` | `400` | Count of total tokens to be produced in response depending upon task |
 
 ### Field Details
 
@@ -174,6 +176,7 @@ Your bot is defined by `chatvat.config.json`. You can edit this file manually af
 * **`llm_model`**: You can select your required Groq LLM model while initialising the ChatBot (e.g., `llama-3.3-70b-versatile`, `mixtral-8x7b-32768`).
 * **`embedding_model`**: HuggingFace model for generating text embeddings (e.g., `all-MiniLM-L6-v2`, `all-mpnet-base-v2`).
 * **`retriever_k`**: Controls how many relevant document chunks are retrieved from the vector database for each query. Higher values (e.g., 10-20) provide more context but may include less relevant information. Lower values (e.g., 2-3) are more focused but may miss contextual details. Default is 5. 
+* **`max_tokens`**: Maximum number of tokens the LLM may generate in a single response. Use this to limit output length and guard against token-exhaustion attacks or runaway outputs. Default is `400`.
 
 ---
 
