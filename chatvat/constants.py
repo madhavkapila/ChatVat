@@ -4,7 +4,7 @@ import os
 
 # app info
 APP_NAME = "ChatVat"
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.2.5"
 
 # model defaults
 DEFAULT_LLM_MODEL = "llama-3.3-70b-versatile"

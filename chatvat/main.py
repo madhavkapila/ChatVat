@@ -16,7 +16,7 @@ from rich.prompt import Prompt, Confirm, IntPrompt
 from rich.table import Table
 
 from chatvat.config_schema import ProjectConfig, DataSource
-from chatvat.constants import DEFAULT_EMBEDDING_MODEL, DEFAULT_LLM_MODEL, DEFAULT_RETRIEVER_K, MAX_TOKENS
+from chatvat.constants import DEFAULT_EMBEDDING_MODEL, DEFAULT_LLM_MODEL, DEFAULT_RETRIEVER_K, MAX_TOKENS, APP_VERSION
 from chatvat.config_loader import load_runtime_config
 from chatvat.utils.logger import log_info, log_error, log_success, log_warning
 from chatvat.builder import build_bot
@@ -233,7 +233,7 @@ def print_banner():
         Align.center(styled_text),
         border_style="bright_blue",
         title="[bold white]The ChatBot Factory[/bold white]",
-        subtitle="[dim]v1.0.0[/dim]",
+        subtitle=f"[dim]v{APP_VERSION}[/dim]",
         padding=(1, 2)
     ))
 
