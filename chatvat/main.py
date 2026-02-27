@@ -8,6 +8,12 @@ import os
 import re
 import sys
 from typing import List, Dict, Optional
+
+try:
+    import readline #Allows cursor ovement in Typer
+except ImportError:
+    pass  # Windows doesn't need this / might not have it natively
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text

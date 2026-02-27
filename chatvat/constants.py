@@ -1,10 +1,16 @@
 # FILE: chatvat/constants.py
 
 import os
+from importlib import metadata
 
 # app info
 APP_NAME = "ChatVat"
-APP_VERSION = "0.2.5"
+try:
+    # Dynamically grabs the version from Poetry/PyPI metadata!
+    APP_VERSION = metadata.version("chatvat")
+except metadata.PackageNotFoundError:
+    # Fallback just in case you are running it raw locally without installing
+    APP_VERSION = "dev"
 
 # model defaults
 DEFAULT_LLM_MODEL = "llama-3.3-70b-versatile"
